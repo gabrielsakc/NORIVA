@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platinum CRM Enterprise</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23f97316'/><text x='5' y='22' font-family='Arial' font-weight='bold' font-size='13' fill='%23fff'>PC</text></svg>">
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.2/babel.min.js"></script>
+<script type="text/babel" data-type="module">
+const { useState, useEffect, useCallback } = React;
+
+// ═══ SUPABASE CONFIG ═══
+const SB = "https://pmxpmzhqoqnlhlytmzzy.supabase.co";
+const AK = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteHBtemhxb3FubGhseXRtenp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3ODQzNzIsImV4cCI6MjA4OTM2MDM3Mn0.llmAtD7bIka9MjFBcuUBHhr8geZU8GdRd5a12GK2lxg";
+const H = { "Content-Type": "application/json", apikey: AK, Authorization: `Bearer ${AK}`, Prefer: "return=representation" };
+const api = {
+  get: (t, q = "") => fetch(`${SB}/rest/v1/${t}?select=*${q}`, { headers: H }).then(r => r.json()),
+  post: (t, d) => fetch(`${SB}/rest/v1/${t}`, { method: "POST", headers: H, body: JSON.stringify(d) }).then(r => r.json()),
+  patch: (t, id, d) => fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: H, body: JSON.stringify(d) }).then(r => r.json()),
+  del: (t, id) => fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: "DELETE", headers: H }),
+};
+
+// ═══ HELPERS ═══
+const fm = n => new Intl.NumberFormat("es-AR", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
+const fd = d => { if (!d) return "—"; try { return new Date(d).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" }) } catch { return d } };
+const ds = d => d ? (typeof d === "string" ? d.slice(0, 10) : new Date(d).toISOString().slice(0, 10)) : "";
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// ═══ ICONS (SVG paths) ═══
+const icons = {
+  dashboard: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+  leads: "M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
+  accounts: "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z",
+  contacts: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
+  pipeline: "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H5V7h7v10zm7 0h-5V7h5v10z",
+  tasks: "M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z",
+  products: "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z",
+  quotes: "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z",
+  tickets: "M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z",
+  invoices: "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 9h-2v2H9v-2H7V9h2V7h2v2h2v2zm3-4V3.5L18.5 9H13z",
+  calendar: "M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z",
+  add: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z",
+  search: "M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
+  close: "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
+  check: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
+  edit: "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
+  del: "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z",
+  logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
+  chevron: "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z",
+  opportunities: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.94s4.18 1.36 4.18 3.85c0 1.89-1.44 2.94-3.12 3.19z",
+  activities: "M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z",
+  goals: "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
+  conversations: "M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z",
+  knowledge: "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z",
+};
+const Ic = ({ name, size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}><path d={icons[name] || ""} /></svg>
+);
+
+// ═══ STYLES ═══
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#f7f8fb;--bg2:#fff;--bg3:#f0f2f7;--bg4:#e4e7ee;--bdr:rgba(55,65,81,.1);--bdr2:rgba(55,65,81,.2);--acc:#2563eb;--ora:#f97316;--grn:#059669;--red:#dc2626;--amb:#d97706;--pur:#7c3aed;--cyn:#0891b2;--tx:#111827;--tx2:#4b5563;--tx3:#9ca3af;--r:10px;--sh:0 1px 3px rgba(0,0,0,.05)}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx)}
+  .crm{display:flex;height:100vh;width:100vw;overflow:hidden}
+  .sb{width:240px;background:var(--bg2);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0}
+  .sb-hd{padding:12px 14px;font-size:15px;font-weight:700;letter-spacing:.5px;border-bottom:1px solid var(--bdr)}.sb-hd span{color:var(--ora)}
+  .sb-nv{flex:1;padding:4px 6px;display:flex;flex-direction:column;gap:0px;overflow-y:auto}
+  .sb-it{display:flex;align-items:center;gap:7px;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:500;color:var(--tx2);border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:all .15s;white-space:nowrap}
+  .sb-it:hover{background:var(--bg3);color:var(--tx)}.sb-it.ac{background:rgba(249,115,22,.08);color:var(--ora);font-weight:600}
+  .sb-ft{padding:8px 10px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:6px}
+  .sb-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--ora),var(--acc));display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+  .mn{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .tp{height:50px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--bg2);flex-shrink:0}
+  .tp h1{font-size:16px;font-weight:700}.tp-dt{font-size:11px;color:var(--tx3)}
+  .pg{flex:1;overflow-y:auto;padding:20px;background:var(--bg)}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;transition:all .15s}
+  .card:hover{box-shadow:var(--sh);border-color:var(--bdr2)}
+  .card-lb{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:6px}
+  .card-vl{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .card-sub{font-size:10px;color:var(--tx3);margin-top:3px}
+  .tbl{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+  .tbl-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--bdr)}
+  .tbl-hd h3{font-size:13px;font-weight:700}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;padding:8px 12px;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);border-bottom:1px solid var(--bdr);font-weight:600;background:var(--bg3)}
+  td{padding:8px 12px;font-size:11px;border-bottom:1px solid var(--bdr)}
+  tr:last-child td{border-bottom:none}tr:hover td{background:rgba(249,115,22,.02)}
+  .bd{display:inline-flex;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+  .bd-new{background:rgba(107,114,128,.1);color:#6b7280}
+  .bd-contacted{background:rgba(37,99,235,.1);color:#2563eb}
+  .bd-qualified{background:rgba(124,58,237,.1);color:#7c3aed}
+  .bd-converted{background:rgba(5,150,105,.1);color:#059669}
+  .bd-lost,.bd-unqualified{background:rgba(220,38,38,.1);color:#dc2626}
+  .bd-open{background:rgba(249,115,22,.1);color:#f97316}
+  .bd-draft{background:rgba(107,114,128,.1);color:#6b7280}
+  .bd-sent{background:rgba(37,99,235,.1);color:#2563eb}
+  .bd-paid,.bd-accepted,.bd-resolved,.bd-completed,.bd-closed,.bd-won{background:rgba(5,150,105,.1);color:#059669}
+  .bd-overdue,.bd-rejected,.bd-critical,.bd-high{background:rgba(220,38,38,.1);color:#dc2626}
+  .bd-medium,.bd-pending,.bd-partial,.bd-in_progress,.bd-waiting{background:rgba(249,115,22,.1);color:#f97316}
+  .bd-low{background:rgba(37,99,235,.1);color:#2563eb}
+  .bd-cancelled{background:rgba(107,114,128,.1);color:#6b7280}
+  .btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .12s}
+  .btn-p{background:var(--ora);color:#fff}.btn-p:hover{background:#ea580c}
+  .btn-s{background:var(--bg2);color:var(--tx2);border-color:var(--bdr)}.btn-s:hover{background:var(--bg3)}
+  .btn-d{background:rgba(220,38,38,.06);color:var(--red);border-color:rgba(220,38,38,.15)}.btn-d:hover{background:rgba(220,38,38,.12)}
+  .btn-sm{padding:4px 8px;font-size:10px}
+  .ipt{width:100%;padding:4px 7px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:#000;font-size:11px;font-family:inherit;outline:none;height:26px}.ipt:focus{border-color:var(--ora)}
+  .ipt::placeholder{color:var(--tx3)}
+  select.ipt{height:26px}
+  textarea.ipt{height:auto;min-height:26px;resize:none}
+  .ig{display:flex;flex-direction:column;gap:1px}.ig label{font-size:8px;color:#374151;font-weight:700;text-transform:uppercase;letter-spacing:.3px;line-height:1}
+  .srch{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:0 10px}
+  .srch input{background:transparent;border:none;color:var(--tx);font-size:11px;padding:6px 0;outline:none;width:160px;font-family:inherit}
+  .mo{position:fixed;inset:0;background:rgba(0,0,0,.2);backdrop-filter:blur(3px);z-index:100;display:flex;align-items:center;justify-content:center}
+  .mdl{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;width:96%;max-width:650px;box-shadow:0 12px 40px rgba(0,0,0,.1)}
+  .mdl-h{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--bdr)}.mdl-h h3{font-size:13px;font-weight:700}
+  .mdl-b{padding:8px 14px;display:flex;flex-direction:column;gap:4px}
+  .mdl-f{padding:8px 14px;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:6px}
+  .kb{display:flex;gap:8px;overflow-x:auto;flex:1;padding-bottom:8px}
+  .kb-col{min-width:200px;max-width:240px;flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column}
+  .kb-hd{padding:10px 12px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+  .kb-tt{font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .kb-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .kb-cnt{font-size:9px;color:var(--tx3);background:var(--bg3);padding:2px 6px;border-radius:8px;font-weight:600}
+  .kb-cds{flex:1;padding:6px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;min-height:40px}
+  .kb-cd{background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:8px;cursor:grab;transition:all .12s}
+  .kb-cd:hover{border-color:var(--ora);transform:translateY(-1px)}
+  .kb-cd h4{font-size:11px;font-weight:600;margin-bottom:2px}.kb-cd p{font-size:9px;color:var(--tx3);margin-bottom:4px}
+  .kb-cd .vl{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--grn)}
+  .pie-w{display:flex;align-items:center;gap:16px;justify-content:center}
+  .pie-lg{display:flex;flex-direction:column;gap:4px}
+  .pie-i{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--tx2)}
+  .pie-dt{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .pie-v{font-weight:600;color:var(--tx);margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;padding-left:6px}
+  .empty{padding:30px;text-align:center;color:var(--tx3);font-size:12px}
+  .bch{display:flex;align-items:flex-end;gap:6px;height:120px}
+  .bcl{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+  .bar{width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:height .4s}
+  .blb{font-size:8px;color:var(--tx3);font-weight:500}.blv{font-size:8px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--tx2)}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .fin{animation:fadeIn .25s ease forwards}
+  ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
+  .lw{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f9fc,#eef1f6)}
+  .lc{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:32px;width:92%;max-width:360px;box-shadow:0 16px 48px rgba(0,0,0,.06)}
+  .lc h1{font-size:20px;font-weight:700;text-align:center;margin-bottom:4px;letter-spacing:.5px}.lc h1 span{color:var(--ora)}
+  .lc p{text-align:center;font-size:11px;color:var(--tx3);margin-bottom:20px}
+  .le{background:rgba(220,38,38,.06);color:var(--red);padding:6px 10px;border-radius:8px;font-size:10px;text-align:center;margin-bottom:6px}
+  @media(max-width:900px){.sb{width:52px}.sb-hd span,.sb-it span,.sb-ft>div{display:none}.sb-it{justify-content:center;padding:8px}.grid4,.grid3{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+`;
+
+// ═══ DONUT PIE ═══
+function Pie({ data, size = 120, thick = 22 }) {
+  const total = data.reduce((a, d) => a + d.v, 0);
+  if (!total) return <div className="empty">Sin datos</div>;
+  const r = size / 2 - 3, ri = r - thick, cx = size / 2, cy = size / 2;
+  let ang = -Math.PI / 2;
+  const arcs = data.filter(d => d.v > 0).map((d, i) => {
+    const pct = d.v / total, a1 = ang, a2 = ang + pct * Math.PI * 2;
+    ang = a2;
+    if (pct >= 0.999) return <g key={i}><circle cx={cx} cy={cy} r={r} fill={d.c} /><circle cx={cx} cy={cy} r={ri} fill="var(--bg2)" /></g>;
+    const lg = pct > 0.5 ? 1 : 0;
+    const p = `M ${cx+r*Math.cos(a1)} ${cy+r*Math.sin(a1)} A ${r} ${r} 0 ${lg} 1 ${cx+r*Math.cos(a2-.001)} ${cy+r*Math.sin(a2-.001)} L ${cx+ri*Math.cos(a2-.001)} ${cy+ri*Math.sin(a2-.001)} A ${ri} ${ri} 0 ${lg} 0 ${cx+ri*Math.cos(a1)} ${cy+ri*Math.sin(a1)} Z`;
+    return <path key={i} d={p} fill={d.c} />;
+  });
+  return (
+    <div className="pie-w">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {arcs}
+        <text x={cx} y={cy - 2} textAnchor="middle" fill="var(--tx)" fontFamily="JetBrains Mono" fontWeight="700" fontSize="14">{total}</text>
+        <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--tx3)" fontFamily="DM Sans" fontWeight="500" fontSize="8">TOTAL</text>
+      </svg>
+      <div className="pie-lg">{data.filter(d => d.v > 0).map(d => (
+        <div className="pie-i" key={d.n}><span className="pie-dt" style={{ background: d.c }} /><span>{d.n}</span><span className="pie-v">{d.v > 999 ? fm(d.v) : d.v}</span></div>
+      ))}</div>
+    </div>
+  );
+}
+
+// ═══ FIELD INPUT ═══
+function Fld({ label, value, onChange, type = "text", options, placeholder }) {
+  let el;
+  if (type === "select") el = <select className="ipt" value={value || ""} onChange={e => onChange(e.target.value)}>{options.map(o => typeof o === "string" ? <option key={o} value={o}>{o}</option> : <option key={o.v} value={o.v}>{o.t}</option>)}</select>;
+  else if (type === "textarea") el = <textarea className="ipt" style={{ minHeight: 26, height: 26, resize: "none" }} value={value || ""} placeholder={placeholder} onChange={e => onChange(e.target.value)} />;
+  else el = <input className="ipt" type={type} value={value == null ? "" : value} placeholder={placeholder} onChange={e => onChange(type === "number" ? Number(e.target.value) : e.target.value)} />;
+  return <div className="ig"><label>{label}</label>{el}</div>;
+}
+
+// ═══ MODAL ═══
+function Modal({ title, onClose, footer, children }) {
+  return (
+    <div className="mo" onClick={onClose}>
+      <div className="mdl" onClick={e => e.stopPropagation()}>
+        <div className="mdl-h"><h3>{title}</h3><button className="btn btn-s btn-sm" onClick={onClose}><Ic name="close" size={12} /></button></div>
+        <div className="mdl-b">{children}</div>
+        <div className="mdl-f">{footer}</div>
+      </div>
+    </div>
+  );
+}
+
+// ═══ LOGIN ═══
+function Login({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const go = () => {
+    setBusy(true); setErr("");
+    api.get("crm_users", `&email=eq.${encodeURIComponent(email)}`).then(rows => {
+      const u = rows?.find(r => r.password_hash === pass);
+      if (u) onLogin(u); else { setErr("Credenciales incorrectas"); setBusy(false); }
+    }).catch(() => { setErr("Error de conexión"); setBusy(false); });
+  };
+  return (
+    <div className="lw"><div className="lc fin">
+      <h1>PLATINUM<span>CRM</span></h1><p>Enterprise · Gestión Comercial 360°</p>
+      {err && <div className="le">{err}</div>}
+      <Fld label="EMAIL" value={email} placeholder="usuario@platinumciber.com" onChange={v => { setEmail(v); setErr("") }} />
+      <div style={{ height: 6 }} />
+      <Fld label="CONTRASEÑA" type="password" value={pass} placeholder="••••••" onChange={v => { setPass(v); setErr("") }} />
+      <div style={{ height: 12 }} />
+      <button className="btn btn-p" style={{ width: "100%", justifyContent: "center", padding: 10, fontSize: 12 }} onClick={go} disabled={busy}>{busy ? "Conectando..." : "Iniciar Sesión"}</button>
+    </div></div>
+  );
+}
+
+// ═══ DASHBOARD ═══
+function Dashboard({ data }) {
+  const { leads, opportunities, tasks, tickets, invoices, transactions, stages, accounts } = data;
+  const opp = opportunities.filter(o => { const s = stages.find(st => st.id === o.stage_id); return s && !s.is_won && !s.is_lost; });
+  const totalPipe = opp.reduce((a, o) => a + (+o.amount || 0), 0);
+  const won = opportunities.filter(o => { const s = stages.find(st => st.id === o.stage_id); return s?.is_won; });
+  const totalWon = won.reduce((a, o) => a + (+o.amount || 0), 0);
+  const tI = transactions.filter(t => t.type === "income").reduce((a, t) => a + (+t.amount || 0), 0);
+  const tE = transactions.filter(t => t.type === "expense").reduce((a, t) => a + (+t.amount || 0), 0);
+  const pendTasks = tasks.filter(t => t.status === "pending").length;
+  const openTickets = tickets.filter(t => t.status === "open" || t.status === "in_progress").length;
+
+  const stageData = stages.filter(s => !s.is_won && !s.is_lost).map(s => ({
+    n: s.name, v: opportunities.filter(o => o.stage_id === s.id).reduce((a, o) => a + (+o.amount || 0), 0), c: s.color
+  }));
+  const mx = Math.max(...stageData.map(s => s.v), 1);
+
+  const pieLeadSrc = {};
+  leads.forEach(l => { const s = l.source || "other"; pieLeadSrc[s] = (pieLeadSrc[s] || 0) + 1; });
+  const srcC = ["#f97316", "#2563eb", "#9ca3af", "#059669", "#7c3aed", "#0891b2", "#dc2626", "#d97706"];
+  const pieSrc = Object.entries(pieLeadSrc).map(([k, v], i) => ({ n: k, v, c: srcC[i % srcC.length] }));
+
+  const pieTickets = [
+    { n: "Abiertos", v: tickets.filter(t => t.status === "open").length, c: "#f97316" },
+    { n: "En Progreso", v: tickets.filter(t => t.status === "in_progress").length, c: "#2563eb" },
+    { n: "Resueltos", v: tickets.filter(t => t.status === "resolved" || t.status === "closed").length, c: "#059669" },
+  ];
+
+  return (
+    <div className="fin">
+      <div className="grid4">
+        <div className="card"><div className="card-lb">Pipeline Activo</div><div className="card-vl" style={{ color: "var(--acc)" }}>{fm(totalPipe)}</div><div className="card-sub">{opp.length} oportunidades</div></div>
+        <div className="card"><div className="card-lb">Negocios Ganados</div><div className="card-vl" style={{ color: "var(--grn)" }}>{fm(totalWon)}</div><div className="card-sub">{won.length} contratos</div></div>
+        <div className="card"><div className="card-lb">Balance Neto</div><div className="card-vl" style={{ color: tI - tE >= 0 ? "var(--grn)" : "var(--red)" }}>{fm(tI - tE)}</div><div className="card-sub">Ingresos − Egresos</div></div>
+        <div className="card"><div className="card-lb">Leads Activos</div><div className="card-vl" style={{ color: "var(--ora)" }}>{leads.filter(l => !["converted", "lost"].includes(l.status)).length}</div><div className="card-sub">{leads.length} totales</div></div>
+      </div>
+      <div className="grid4">
+        <div className="card"><div className="card-lb">Tareas Pendientes</div><div className="card-vl" style={{ color: "var(--amb)" }}>{pendTasks}</div><div className="card-sub">de {tasks.length} totales</div></div>
+        <div className="card"><div className="card-lb">Tickets Abiertos</div><div className="card-vl" style={{ color: "var(--ora)" }}>{openTickets}</div><div className="card-sub">{tickets.length} totales</div></div>
+        <div className="card"><div className="card-lb">Cuentas</div><div className="card-vl" style={{ color: "var(--pur)" }}>{accounts.length}</div><div className="card-sub">en cartera</div></div>
+        <div className="card"><div className="card-lb">Facturas Pendientes</div><div className="card-vl" style={{ color: "var(--red)" }}>{fm(invoices.filter(i => i.status !== "paid" && i.status !== "cancelled").reduce((a, i) => a + (+i.total || 0), 0))}</div><div className="card-sub">{invoices.filter(i => i.status !== "paid").length} sin cobrar</div></div>
+      </div>
+      <div className="grid2">
+        <div className="card"><div className="card-lb" style={{ marginBottom: 12 }}>Pipeline por Etapa</div>
+          <div className="bch">{stageData.map(s => <div className="bcl" key={s.n}><div className="blv">{fm(s.v)}</div><div className="bar" style={{ height: `${s.v / mx * 100}%`, background: s.c }} /><div className="blb">{s.n}</div></div>)}</div>
+        </div>
+        <div className="card"><div className="card-lb" style={{ marginBottom: 12 }}>Leads por Fuente</div><Pie data={pieSrc} /></div>
+      </div>
+      <div className="grid2">
+        <div className="card"><div className="card-lb" style={{ marginBottom: 12 }}>Finanzas</div>
+          <div className="bch">{[{ n: "Ingresos", v: tI, c: "#2563eb" }, { n: "Egresos", v: tE, c: "#f97316" }, { n: "Neto", v: Math.max(tI - tE, 0), c: "#059669" }].map(b => <div className="bcl" key={b.n} style={{ flex: 2 }}><div className="blv">{fm(b.v)}</div><div className="bar" style={{ height: `${b.v / Math.max(tI, tE, 1) * 100}%`, background: b.c }} /><div className="blb">{b.n}</div></div>)}</div>
+        </div>
+        <div className="card"><div className="card-lb" style={{ marginBottom: 12 }}>Tickets</div><Pie data={pieTickets} /></div>
+      </div>
+      <div className="grid2">
+        <div className="tbl"><div className="tbl-hd"><h3>Últimas Oportunidades</h3></div>
+          {opportunities.length ? <table><thead><tr><th>Nombre</th><th>Monto</th><th>Etapa</th></tr></thead><tbody>{opportunities.slice(0, 5).map(o => { const s = stages.find(st => st.id === o.stage_id); return <tr key={o.id}><td style={{ fontWeight: 600 }}>{o.name}</td><td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fm(o.amount)}</td><td><span className="bd" style={{ background: `${s?.color}20`, color: s?.color }}>{s?.name || "—"}</span></td></tr>; })}</tbody></table> : <div className="empty">Sin oportunidades</div>}
+        </div>
+        <div className="tbl"><div className="tbl-hd"><h3>Tareas Próximas</h3></div>
+          {tasks.length ? <table><thead><tr><th>Tarea</th><th>Fecha</th><th>Prioridad</th></tr></thead><tbody>{tasks.filter(t => t.status !== "completed").sort((a, b) => (a.due_date || "").localeCompare(b.due_date || "")).slice(0, 5).map(t => <tr key={t.id}><td style={{ fontWeight: 500 }}>{t.title}</td><td>{fd(t.due_date)}</td><td><span className={`bd bd-${t.priority}`}>{t.priority}</span></td></tr>)}</tbody></table> : <div className="empty">Sin tareas</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══ GENERIC LIST MODULE ═══
+function ListModule({ title, table, columns, formFields, data, reload, emptyMsg, formatRow, newDefaults = {}, extraActions, filterOptions, topButtons }) {
+  const [search, setSearch] = useState("");
+  const [modal, setModal] = useState(false);
+  const [ed, setEd] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [filter, setFilter] = useState("all");
+
+  const filtered = data.filter(item => {
+    if (!search && filter === "all") return true;
+    const s = search.toLowerCase();
+    const matchSearch = !search || columns.some(c => String(item[c.key] || "").toLowerCase().includes(s));
+    const matchFilter = filter === "all" || (filterOptions && item[filterOptions.key] === filter);
+    return matchSearch && matchFilter;
+  });
+
+  const openNew = () => { setEd({ ...newDefaults }); setModal(true); };
+  const openEdit = (item) => { setEd({ ...item }); setModal(true); };
+  const save = () => {
+    if (saving) return;
+    setSaving(true);
+    const payload = {};
+    formFields.forEach(f => { if (f.key) payload[f.key] = ed[f.key] ?? null; });
+    const prom = ed.id ? api.patch(table, ed.id, payload) : api.post(table, payload);
+    prom.then(() => { setModal(false); setSaving(false); reload(); }).catch(() => setSaving(false));
+  };
+  const remove = (id) => { api.del(table, id).then(reload); };
+
+  return (
+    <div className="fin">
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="srch"><Ic name="search" size={13} color="var(--tx3)" /><input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+        {filterOptions && <select className="ipt" style={{ width: "auto" }} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos</option>{filterOptions.values.map(o => <option key={o.v} value={o.v}>{o.t}</option>)}</select>}
+        <div style={{ flex: 1 }} />
+        {topButtons}
+        <button className="btn btn-p" onClick={openNew}><Ic name="add" size={13} /> Nuevo</button>
+      </div>
+      <div className="tbl">
+        {filtered.length ? (
+          <table>
+            <thead><tr>{columns.map(c => <th key={c.key}>{c.label}</th>)}<th>Acciones</th></tr></thead>
+            <tbody>{filtered.map(item => (
+              <tr key={item.id}>
+                {columns.map(c => <td key={c.key}>{formatRow ? formatRow(item, c.key) : (c.render ? c.render(item[c.key], item) : String(item[c.key] || "—"))}</td>)}
+                <td style={{ whiteSpace: "nowrap" }}>
+                  {extraActions && extraActions(item)}
+                  <button className="btn btn-s btn-sm" onClick={() => openEdit(item)}>Editar</button>
+                </td>
+              </tr>
+            ))}</tbody>
+          </table>
+        ) : <div className="empty">{emptyMsg || "Sin registros"}</div>}
+      </div>
+      {modal && ed && (
+        <Modal title={ed.id ? `Editar ${title}` : `Nuevo ${title}`} onClose={() => setModal(false)} footer={<>
+          {ed.id && <button className="btn btn-d" style={{ marginRight: "auto" }} onClick={() => { remove(ed.id); setModal(false); }}>Eliminar</button>}
+          <button className="btn btn-s" onClick={() => setModal(false)}>Cancelar</button>
+          <button className="btn btn-p" onClick={save} disabled={saving}>{saving ? "Guardando..." : "Guardar"}</button>
+        </>}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+            {formFields.map(f => (
+              <div key={f.key} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
+                <Fld label={f.label} type={f.type || "text"} value={ed[f.key]} options={f.options} placeholder={f.placeholder}
+                  onChange={v => setEd({ ...ed, [f.key]: v })} />
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ═══ PIPELINE KANBAN ═══
+function PipelineView({ data, reload }) {
+  const { opportunities, stages, accounts } = data;
+  const [dragged, setDragged] = useState(null);
+  const drop = (stageId) => {
+    if (!dragged) return;
+    api.patch("crm_opportunities", dragged, { stage_id: stageId }).then(() => { setDragged(null); reload(); });
+  };
+  return (
+    <div className="fin" style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
+      <div className="kb">{stages.map(s => {
+        const items = opportunities.filter(o => o.stage_id === s.id);
+        const tot = items.reduce((a, o) => a + (+o.amount || 0), 0);
+        return (
+          <div className="kb-col" key={s.id} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); drop(s.id); }}>
+            <div className="kb-hd"><div className="kb-tt"><span className="kb-dot" style={{ background: s.color }} />{s.name}</div><span className="kb-cnt">{items.length}</span></div>
+            <div style={{ padding: "2px 10px 0", fontSize: 10, color: "var(--tx3)", fontFamily: "'JetBrains Mono'" }}>{fm(tot)}</div>
+            <div className="kb-cds">{items.map(o => {
+              const acc = accounts.find(a => a.id === o.account_id);
+              return (
+                <div className="kb-cd" key={o.id} draggable onDragStart={e => { setDragged(o.id); e.dataTransfer.effectAllowed = "move"; }}>
+                  <h4>{o.name}</h4><p>{acc?.name || "Sin cuenta"}</p><div className="vl">{fm(o.amount)}</div>
+                </div>
+              );
+            })}</div>
+          </div>
+        );
+      })}</div>
+    </div>
+  );
+}
+
+// ═══ MAIN NAV ═══
+const NAV = [
+  { id: "dashboard", label: "Dashboard", icon: "dashboard", group: "principal" },
+  { id: "leads", label: "Leads", icon: "leads", group: "comercial" },
+  { id: "accounts", label: "Cuentas", icon: "accounts", group: "comercial" },
+  { id: "contacts", label: "Contactos", icon: "contacts", group: "comercial" },
+  { id: "opportunities", label: "Oportunidades", icon: "opportunities", group: "comercial" },
+  { id: "pipeline", label: "Pipeline", icon: "pipeline", group: "comercial" },
+  { id: "tasks", label: "Tareas", icon: "tasks", group: "operaciones" },
+  { id: "calendar", label: "Calendario", icon: "calendar", group: "operaciones" },
+  { id: "activities", label: "Actividades", icon: "activities", group: "operaciones" },
+  { id: "products", label: "Productos", icon: "products", group: "comercial" },
+  { id: "quotes", label: "Cotizaciones", icon: "quotes", group: "comercial" },
+  { id: "tickets", label: "Tickets", icon: "tickets", group: "soporte" },
+  { id: "invoices", label: "Facturas", icon: "invoices", group: "finanzas" },
+  { id: "transactions", label: "Transacciones", icon: "invoices", group: "finanzas" },
+  { id: "conversations", label: "Conversaciones", icon: "conversations", group: "comunicación" },
+  { id: "goals", label: "Metas", icon: "goals", group: "analytics" },
+  { id: "forecasts", label: "Forecasts", icon: "goals", group: "analytics" },
+  { id: "teams", label: "Equipos", icon: "contacts", group: "admin" },
+  { id: "territories", label: "Territorios", icon: "accounts", group: "admin" },
+  { id: "automations", label: "Automatizaciones", icon: "activities", group: "admin" },
+  { id: "surveys", label: "Encuestas", icon: "tickets", group: "soporte" },
+  { id: "knowledge", label: "Conocimiento", icon: "knowledge", group: "soporte" },
+];
+
+const LEAD_SOURCES = [{ v: "", t: "Seleccionar..." }, { v: "web", t: "Web" }, { v: "referral", t: "Referido" }, { v: "linkedin", t: "LinkedIn" }, { v: "event", t: "Evento" }, { v: "partner", t: "Partner" }, { v: "cold_call", t: "Cold Call" }, { v: "advertising", t: "Publicidad" }, { v: "other", t: "Otro" }];
+const LEAD_STATUS = [{ v: "new", t: "Nuevo" }, { v: "contacted", t: "Contactado" }, { v: "qualified", t: "Calificado" }, { v: "unqualified", t: "No Calificado" }, { v: "converted", t: "Convertido" }, { v: "lost", t: "Perdido" }];
+const PRIORITIES = [{ v: "low", t: "Baja" }, { v: "medium", t: "Media" }, { v: "high", t: "Alta" }, { v: "critical", t: "Crítica" }];
+const TASK_STATUS = [{ v: "pending", t: "Pendiente" }, { v: "in_progress", t: "En Progreso" }, { v: "completed", t: "Completada" }, { v: "cancelled", t: "Cancelada" }];
+const TASK_TYPES = [{ v: "task", t: "Tarea" }, { v: "call", t: "Llamada" }, { v: "email", t: "Email" }, { v: "meeting", t: "Reunión" }, { v: "follow_up", t: "Seguimiento" }, { v: "deadline", t: "Deadline" }];
+const TICKET_STATUS = [{ v: "open", t: "Abierto" }, { v: "in_progress", t: "En Progreso" }, { v: "waiting", t: "Esperando" }, { v: "resolved", t: "Resuelto" }, { v: "closed", t: "Cerrado" }];
+const TICKET_CHANNELS = [{ v: "email", t: "Email" }, { v: "phone", t: "Teléfono" }, { v: "whatsapp", t: "WhatsApp" }, { v: "chat", t: "Chat" }, { v: "portal", t: "Portal" }];
+const INV_STATUS = [{ v: "draft", t: "Borrador" }, { v: "sent", t: "Enviada" }, { v: "paid", t: "Pagada" }, { v: "partial", t: "Parcial" }, { v: "overdue", t: "Vencida" }, { v: "cancelled", t: "Cancelada" }];
+const QUOTE_STATUS = [{ v: "draft", t: "Borrador" }, { v: "sent", t: "Enviada" }, { v: "accepted", t: "Aceptada" }, { v: "rejected", t: "Rechazada" }, { v: "expired", t: "Expirada" }];
+const ACC_TYPES = [{ v: "prospect", t: "Prospecto" }, { v: "customer", t: "Cliente" }, { v: "partner", t: "Partner" }, { v: "competitor", t: "Competidor" }];
+const ACC_SIZES = [{ v: "", t: "—" }, { v: "micro", t: "Micro" }, { v: "small", t: "Pequeña" }, { v: "medium", t: "Mediana" }, { v: "large", t: "Grande" }, { v: "enterprise", t: "Enterprise" }];
+const PROD_TYPES = [{ v: "product", t: "Producto" }, { v: "service", t: "Servicio" }];
+const OPP_TYPES = [{ v: "new_business", t: "Nuevo Negocio" }, { v: "renewal", t: "Renovación" }, { v: "upsell", t: "Upsell" }, { v: "cross_sell", t: "Cross-sell" }];
+const EVENT_TYPES = [{ v: "meeting", t: "Reunión" }, { v: "call", t: "Llamada" }, { v: "visit", t: "Visita" }, { v: "webinar", t: "Webinar" }, { v: "demo", t: "Demo" }, { v: "other", t: "Otro" }];
+const GOAL_TYPES = [{ v: "revenue", t: "Revenue" }, { v: "deals", t: "Deals Cerrados" }, { v: "leads", t: "Leads" }, { v: "calls", t: "Llamadas" }, { v: "meetings", t: "Reuniones" }, { v: "tickets_resolved", t: "Tickets Resueltos" }];
+const GOAL_PERIODS = [{ v: "weekly", t: "Semanal" }, { v: "monthly", t: "Mensual" }, { v: "quarterly", t: "Trimestral" }, { v: "yearly", t: "Anual" }];
+const GOAL_STATUS = [{ v: "active", t: "Activa" }, { v: "completed", t: "Completada" }, { v: "missed", t: "No Alcanzada" }, { v: "cancelled", t: "Cancelada" }];
+const CONV_CHANNELS = [{ v: "email", t: "Email" }, { v: "whatsapp", t: "WhatsApp" }, { v: "phone", t: "Teléfono" }, { v: "chat", t: "Chat" }, { v: "sms", t: "SMS" }, { v: "other", t: "Otro" }];
+const CONV_DIR = [{ v: "inbound", t: "Entrante" }, { v: "outbound", t: "Saliente" }];
+const ACT_TYPES = [{ v: "call", t: "Llamada" }, { v: "email", t: "Email" }, { v: "meeting", t: "Reunión" }, { v: "note", t: "Nota" }, { v: "task", t: "Tarea" }, { v: "whatsapp", t: "WhatsApp" }, { v: "visit", t: "Visita" }, { v: "other", t: "Otro" }];
+const KB_STATUS = [{ v: "draft", t: "Borrador" }, { v: "published", t: "Publicado" }, { v: "archived", t: "Archivado" }];
+const AUTOMATION_TRIGGERS = [{ v: "lead_created", t: "Lead Creado" }, { v: "lead_status_change", t: "Lead Cambio Estado" }, { v: "opportunity_stage_change", t: "Oportunidad Cambio Etapa" }, { v: "ticket_created", t: "Ticket Creado" }, { v: "ticket_overdue", t: "Ticket Vencido" }, { v: "task_overdue", t: "Tarea Vencida" }, { v: "account_inactive", t: "Cuenta Inactiva" }, { v: "deal_stale", t: "Deal Estancado" }, { v: "invoice_overdue", t: "Factura Vencida" }, { v: "custom", t: "Personalizado" }];
+const SURVEY_TYPES = [{ v: "csat", t: "CSAT" }, { v: "nps", t: "NPS" }, { v: "ces", t: "CES" }];
+const TX_TYPES = [{ v: "income", t: "Ingreso" }, { v: "expense", t: "Egreso" }];
+const TX_STATUS = [{ v: "pending", t: "Pendiente" }, { v: "completed", t: "Completado" }, { v: "cancelled", t: "Cancelado" }];
+const TX_CATS_IN = [{ v: "", t: "Seleccionar..." }, "Contrato", "Servicio", "Consultoría", "Licencia", "Otro"];
+const TX_CATS_EX = [{ v: "", t: "Seleccionar..." }, "Personal", "Licencias", "Marketing", "Infraestructura", "Oficina", "Viajes", "Otro"];
+
+// ═══ APP ═══
+function App() {
+  const [user, setUser] = useState(null);
+  const [view, setView] = useState("dashboard");
+  const [loading, setLoading] = useState(true);
+  const [calMonth, setCalMonth] = useState(new Date());
+  const [data, setData] = useState({ leads: [], contacts: [], accounts: [], opportunities: [], stages: [], tasks: [], products: [], quotes: [], tickets: [], invoices: [], transactions: [], events: [], goals: [], forecasts: [], conversations: [], activities: [], kb_articles: [], teams: [], territories: [], automations: [], surveys: [] });
+
+  const loadAll = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      api.get("crm_leads", "&order=created_at.desc"),
+      api.get("crm_contacts", "&order=created_at.desc"),
+      api.get("crm_accounts", "&order=created_at.desc"),
+      api.get("crm_opportunities", "&order=created_at.desc"),
+      api.get("crm_pipeline_stages", "&order=order_num.asc"),
+      api.get("crm_tasks", "&order=created_at.desc"),
+      api.get("crm_products", "&order=name.asc"),
+      api.get("crm_quotes", "&order=created_at.desc"),
+      api.get("crm_tickets", "&order=created_at.desc"),
+      api.get("crm_invoices", "&order=created_at.desc"),
+      api.get("crm_transactions", "&order=created_at.desc"),
+      api.get("crm_events", "&order=start_at.desc"),
+      api.get("crm_goals", "&order=created_at.desc"),
+      api.get("crm_forecasts", "&order=created_at.desc"),
+      api.get("crm_conversations", "&order=created_at.desc"),
+      api.get("crm_activities", "&order=created_at.desc"),
+      api.get("crm_kb_articles", "&order=created_at.desc"),
+      api.get("crm_teams", "&order=created_at.desc"),
+      api.get("crm_territories", "&order=created_at.desc"),
+      api.get("crm_automations", "&order=created_at.desc"),
+      api.get("crm_surveys", "&order=created_at.desc"),
+    ]).then(([leads, contacts, accounts, opportunities, stages, tasks, products, quotes, tickets, invoices, transactions, events, goals, forecasts, conversations, activities, kb_articles, teams, territories, automations, surveys]) => {
+      setData({ leads: leads||[], contacts: contacts||[], accounts: accounts||[], opportunities: opportunities||[], stages: stages||[], tasks: tasks||[], products: products||[], quotes: quotes||[], tickets: tickets||[], invoices: invoices||[], transactions: transactions||[], events: events||[], goals: goals||[], forecasts: forecasts||[], conversations: conversations||[], activities: activities||[], kb_articles: kb_articles||[], teams: teams||[], territories: territories||[], automations: automations||[], surveys: surveys||[] });
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { if (user) loadAll(); }, [user, loadAll]);
+
+  if (!user) return <><style>{css}</style><Login onLogin={setUser} /></>;
+
+  const accOpts = [{ v: "", t: "— Ninguna —" }, ...data.accounts.map(a => ({ v: a.id, t: a.name }))];
+  const ctcOpts = [{ v: "", t: "— Ninguno —" }, ...data.contacts.map(c => ({ v: c.id, t: `${c.first_name} ${c.last_name || ""}` }))];
+  const stgOpts = data.stages.map(s => ({ v: s.id, t: s.name }));
+  const prodOpts = [{ v: "", t: "— Ninguno —" }, ...data.products.map(p => ({ v: p.id, t: p.name }))];
+  const oppOpts = [{ v: "", t: "— Ninguna —" }, ...data.opportunities.map(o => ({ v: o.id, t: o.name }))];
+
+  // ═══ WORKFLOW: Convert Lead → Account + Contact + Opportunity ═══
+  const convertLead = async (lead) => {
+    if (!lead.company) { alert("El lead necesita una empresa para convertir"); return; }
+    if (lead.status === "converted") { alert("Este lead ya fue convertido"); return; }
+    try {
+      // 1. Create Account
+      const accRes = await api.post("crm_accounts", {
+        name: lead.company, industry: lead.industry, phone: lead.phone, email: lead.email,
+        type: "prospect", health_score: 50, owner_id: user.id, notes: "Convertido desde lead"
+      });
+      const accId = accRes?.[0]?.id;
+      // 2. Create Contact
+      const names = (lead.contact_name || "").split(" ");
+      const ctcRes = await api.post("crm_contacts", {
+        first_name: names[0] || lead.company, last_name: names.slice(1).join(" ") || "",
+        email: lead.email, phone: lead.phone, account_id: accId, owner_id: user.id,
+        notes: "Convertido desde lead"
+      });
+      const ctcId = ctcRes?.[0]?.id;
+      // 3. Create Opportunity
+      const firstStage = data.stages.find(s => s.order_num === 1) || data.stages[0];
+      await api.post("crm_opportunities", {
+        name: `Oportunidad - ${lead.company}`, account_id: accId, contact_id: ctcId,
+        stage_id: firstStage?.id, amount: lead.estimated_value || 0,
+        probability: firstStage?.probability || 10, source: lead.source,
+        type: "new_business", priority: "medium", owner_id: user.id,
+        notes: "Generada automáticamente desde conversión de lead"
+      });
+      // 4. Update Lead status
+      await api.patch("crm_leads", lead.id, {
+        status: "converted", converted_to_account: accId, converted_to_contact: ctcId,
+        converted_at: new Date().toISOString()
+      });
+      alert(`✓ Lead convertido:\n• Cuenta: ${lead.company}\n• Contacto: ${lead.contact_name || lead.company}\n• Oportunidad creada en ${firstStage?.name || "Pipeline"}`);
+      loadAll();
+    } catch (err) { alert("Error al convertir: " + err.message); }
+  };
+
+  // ═══ WORKFLOW: Quote → Invoice ═══
+  const quoteToInvoice = async (quote) => {
+    if (quote.status !== "accepted") { alert("Solo se pueden facturar cotizaciones aceptadas"); return; }
+    const existing = data.invoices.find(i => i.quote_id === quote.id);
+    if (existing) { alert(`Ya existe la factura ${existing.invoice_number} para esta cotización`); return; }
+    try {
+      await api.post("crm_invoices", {
+        invoice_number: `FAC-${uid()}`, quote_id: quote.id,
+        opportunity_id: quote.opportunity_id, account_id: quote.account_id,
+        contact_id: quote.contact_id, status: "sent",
+        subtotal: quote.subtotal || 0, tax: quote.tax || 0,
+        total: quote.total || 0, paid_amount: 0,
+        due_date: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        notes: `Generada desde cotización ${quote.quote_number}`
+      });
+      alert(`✓ Factura generada desde cotización ${quote.quote_number}\nMonto: ${fm(quote.total)}\nVencimiento: 30 días`);
+      loadAll();
+    } catch (err) { alert("Error al generar factura: " + err.message); }
+  };
+
+  // ═══ WORKFLOW: Auto-calculate Forecast from Pipeline ═══
+  const generateForecast = async () => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const monthLabel = now.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+    const activeOpps = data.opportunities.filter(o => {
+      const s = data.stages.find(st => st.id === o.stage_id);
+      return s && !s.is_won && !s.is_lost;
+    });
+    const wonThisMonth = data.opportunities.filter(o => {
+      const s = data.stages.find(st => st.id === o.stage_id);
+      if (!s?.is_won) return false;
+      const cd = o.actual_close_date || o.updated_at;
+      return cd && new Date(cd) >= monthStart && new Date(cd) <= monthEnd;
+    });
+    const bestCase = activeOpps.reduce((a, o) => a + (+o.amount || 0), 0);
+    const mostLikely = activeOpps.reduce((a, o) => a + (+o.amount || 0) * ((+o.probability || 0) / 100), 0);
+    const worstCase = activeOpps.filter(o => (+o.probability || 0) >= 50).reduce((a, o) => a + (+o.amount || 0) * ((+o.probability || 0) / 100), 0);
+    const committed = activeOpps.filter(o => (+o.probability || 0) >= 75).reduce((a, o) => a + (+o.amount || 0), 0);
+    const closed = wonThisMonth.reduce((a, o) => a + (+o.amount || 0), 0);
+    try {
+      await api.post("crm_forecasts", {
+        period_label: monthLabel, start_date: ds(monthStart), end_date: ds(monthEnd),
+        best_case: Math.round(bestCase), most_likely: Math.round(mostLikely),
+        worst_case: Math.round(worstCase), committed: Math.round(committed),
+        closed: Math.round(closed), owner_id: user.id,
+        notes: `Auto-generado: ${activeOpps.length} oportunidades activas, ${wonThisMonth.length} cerradas este mes`
+      });
+      alert(`✓ Forecast generado para ${monthLabel}:\n• Mejor caso: ${fm(bestCase)}\n• Probable: ${fm(mostLikely)}\n• Comprometido: ${fm(committed)}\n• Cerrado: ${fm(closed)}`);
+      loadAll();
+    } catch (err) { alert("Error al generar forecast: " + err.message); }
+  };
+  const pg = NAV.find(n => n.id === view)?.label || "Dashboard";
+  let content;
+
+  if (loading) content = <div className="empty" style={{ padding: 60 }}>Cargando datos...</div>;
+  else if (view === "dashboard") content = <Dashboard data={data} />;
+  else if (view === "pipeline") content = <PipelineView data={data} reload={loadAll} />;
+  else if (view === "leads") content = <ListModule title="Lead" table="crm_leads" data={data.leads} reload={loadAll}
+    filterOptions={{ key: "status", values: LEAD_STATUS }}
+    extraActions={(item) => item.status !== "converted" && item.status !== "lost" ? (
+      <button className="btn btn-sm" style={{ background: "rgba(5,150,105,.08)", color: "var(--grn)", border: "1px solid rgba(5,150,105,.2)", marginRight: 4, fontSize: 9 }}
+        onClick={() => convertLead(item)}>Convertir</button>
+    ) : item.status === "converted" ? <span style={{ fontSize: 9, color: "var(--grn)", marginRight: 4 }}>✓ Convertido</span> : null}
+    columns={[
+      { key: "company", label: "Empresa" },
+      { key: "contact_name", label: "Contacto" },
+      { key: "source", label: "Fuente" },
+      { key: "estimated_value", label: "Valor", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fm(v)}</span> },
+      { key: "score", label: "Score", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: v >= 70 ? "var(--grn)" : v >= 40 ? "var(--ora)" : "var(--tx3)" }}>{v || 0}</span> },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+    ]}
+    formFields={[
+      { key: "company", label: "Empresa" }, { key: "contact_name", label: "Contacto" }, { key: "email", label: "Email", type: "email" },
+      { key: "phone", label: "Teléfono" }, { key: "estimated_value", label: "Valor", type: "number" }, { key: "score", label: "Score", type: "number" },
+      { key: "source", label: "Fuente", type: "select", options: LEAD_SOURCES }, { key: "status", label: "Estado", type: "select", options: LEAD_STATUS }, { key: "industry", label: "Industria" },
+    ]}
+    newDefaults={{ status: "new", score: 0, estimated_value: 0, owner_id: user.id }}
+  />;
+  else if (view === "accounts") content = <ListModule title="Cuenta" table="crm_accounts" data={data.accounts} reload={loadAll}
+    columns={[
+      { key: "name", label: "Nombre" }, { key: "industry", label: "Industria" }, { key: "type", label: "Tipo", render: v => <span className={`bd bd-${v === "customer" ? "won" : "open"}`}>{v}</span> },
+      { key: "health_score", label: "Health", render: v => <span style={{ fontFamily: "'JetBrains Mono'", fontWeight: 700, color: v >= 70 ? "var(--grn)" : v >= 40 ? "var(--ora)" : "var(--red)" }}>{v}%</span> },
+      { key: "country", label: "País" },
+    ]}
+    formFields={[
+      { key: "name", label: "Nombre *" }, { key: "industry", label: "Industria" }, { key: "type", label: "Tipo", type: "select", options: ACC_TYPES },
+      { key: "phone", label: "Teléfono" }, { key: "email", label: "Email" }, { key: "country", label: "País" },
+      { key: "size", label: "Tamaño", type: "select", options: ACC_SIZES }, { key: "health_score", label: "Health Score", type: "number" }, { key: "annual_revenue", label: "Revenue", type: "number" },
+    ]}
+    newDefaults={{ type: "prospect", health_score: 50, owner_id: user.id }}
+  />;
+  else if (view === "contacts") content = <ListModule title="Contacto" table="crm_contacts" data={data.contacts} reload={loadAll}
+    columns={[
+      { key: "first_name", label: "Nombre", render: (v, item) => <span style={{ fontWeight: 600 }}>{v} {item.last_name || ""}</span> },
+      { key: "email", label: "Email" }, { key: "job_title", label: "Cargo" },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+    ]}
+    formFields={[
+      { key: "first_name", label: "Nombre *" }, { key: "last_name", label: "Apellido" }, { key: "email", label: "Email", type: "email" },
+      { key: "phone", label: "Teléfono" }, { key: "job_title", label: "Cargo" }, { key: "department", label: "Depto." },
+      { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "linkedin", label: "LinkedIn" }, { key: "mobile", label: "Móvil" },
+    ]}
+    newDefaults={{ owner_id: user.id }}
+  />;
+  else if (view === "tasks") content = <ListModule title="Tarea" table="crm_tasks" data={data.tasks} reload={loadAll}
+    columns={[
+      { key: "title", label: "Tarea" },
+      { key: "type", label: "Tipo", render: v => <span className={`bd bd-${v === "call" ? "contacted" : "open"}`}>{v}</span> },
+      { key: "due_date", label: "Fecha", render: v => fd(v) },
+      { key: "priority", label: "Prioridad", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+    ]}
+    formFields={[
+      { key: "title", label: "Título *" }, { key: "type", label: "Tipo", type: "select", options: TASK_TYPES }, { key: "due_date", label: "Fecha", type: "date" },
+      { key: "priority", label: "Prioridad", type: "select", options: PRIORITIES }, { key: "status", label: "Estado", type: "select", options: TASK_STATUS }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts },
+    ]}
+    newDefaults={{ status: "pending", priority: "medium", type: "task", owner_id: user.id }}
+  />;
+  else if (view === "products") content = <ListModule title="Producto" table="crm_products" data={data.products} reload={loadAll}
+    columns={[
+      { key: "name", label: "Nombre" }, { key: "type", label: "Tipo", render: v => <span className={`bd bd-${v === "service" ? "contacted" : "open"}`}>{v}</span> },
+      { key: "category", label: "Categoría" },
+      { key: "unit_price", label: "Precio", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fm(v)}</span> },
+    ]}
+    formFields={[
+      { key: "name", label: "Nombre *" }, { key: "sku", label: "SKU" }, { key: "type", label: "Tipo", type: "select", options: PROD_TYPES },
+      { key: "category", label: "Categoría" }, { key: "unit_price", label: "Precio", type: "number" }, { key: "cost", label: "Costo", type: "number" },
+      { key: "description", label: "Descripción" },
+    ]}
+    newDefaults={{ type: "service", unit_price: 0, cost: 0, active: true }}
+  />;
+  else if (view === "quotes") content = <ListModule title="Cotización" table="crm_quotes" data={data.quotes} reload={loadAll}
+    filterOptions={{ key: "status", values: QUOTE_STATUS }}
+    extraActions={(item) => item.status === "accepted" ? (
+      <button className="btn btn-sm" style={{ background: "rgba(37,99,235,.08)", color: "var(--acc)", border: "1px solid rgba(37,99,235,.2)", marginRight: 4, fontSize: 9 }}
+        onClick={() => quoteToInvoice(item)}>→ Facturar</button>
+    ) : null}
+    columns={[
+      { key: "quote_number", label: "N°" },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+      { key: "total", label: "Total", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fm(v)}</span> },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+      { key: "valid_until", label: "Válida hasta", render: v => fd(v) },
+    ]}
+    formFields={[
+      { key: "quote_number", label: "N° *" }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "status", label: "Estado", type: "select", options: QUOTE_STATUS },
+      { key: "subtotal", label: "Subtotal", type: "number" }, { key: "tax", label: "Impuesto", type: "number" }, { key: "total", label: "Total", type: "number" },
+      { key: "discount_pct", label: "Dto %", type: "number" }, { key: "valid_until", label: "Válida hasta", type: "date" }, { key: "opportunity_id", label: "Oportunidad", type: "select", options: oppOpts },
+    ]}
+    newDefaults={{ status: "draft", quote_number: `COT-${uid()}`, owner_id: user.id }}
+  />;
+  else if (view === "tickets") content = <ListModule title="Ticket" table="crm_tickets" data={data.tickets} reload={loadAll}
+    columns={[
+      { key: "ticket_number", label: "N°" }, { key: "subject", label: "Asunto" },
+      { key: "priority", label: "Prioridad", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+      { key: "channel", label: "Canal" },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+    ]}
+    formFields={[
+      { key: "ticket_number", label: "N° Ticket *" }, { key: "subject", label: "Asunto *" },
+      { key: "priority", label: "Prioridad", type: "select", options: PRIORITIES },
+      { key: "status", label: "Estado", type: "select", options: TICKET_STATUS },
+      { key: "channel", label: "Canal", type: "select", options: TICKET_CHANNELS },
+      { key: "account_id", label: "Cuenta", type: "select", options: accOpts },
+      { key: "contact_id", label: "Contacto", type: "select", options: ctcOpts },
+      { key: "category", label: "Categoría" },
+      { key: "description", label: "Descripción" },
+    ]}
+    newDefaults={{ status: "open", priority: "medium", channel: "email", ticket_number: `TK-${uid()}`, assigned_to: user.id }}
+  />;
+  else if (view === "invoices") content = <ListModule title="Factura" table="crm_invoices" data={data.invoices} reload={loadAll}
+    columns={[
+      { key: "invoice_number", label: "N°" },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+      { key: "total", label: "Total", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>{fm(v)}</span> },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+      { key: "due_date", label: "Vencimiento", render: v => fd(v) },
+    ]}
+    formFields={[
+      { key: "invoice_number", label: "N° *" }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "status", label: "Estado", type: "select", options: INV_STATUS },
+      { key: "subtotal", label: "Subtotal", type: "number" }, { key: "tax", label: "Impuesto", type: "number" }, { key: "total", label: "Total", type: "number" },
+      { key: "paid_amount", label: "Pagado", type: "number" }, { key: "due_date", label: "Vencimiento", type: "date" }, { key: "notes", label: "Notas" },
+    ]}
+    newDefaults={{ status: "draft", invoice_number: `FAC-${uid()}` }}
+  />;
+  else if (view === "opportunities") content = <ListModule title="Oportunidad" table="crm_opportunities" data={data.opportunities} reload={loadAll}
+    columns={[
+      { key: "name", label: "Nombre" },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+      { key: "amount", label: "Monto", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>{fm(v)}</span> },
+      { key: "stage_id", label: "Etapa", render: (v) => { const s = data.stages.find(st => st.id === v); return s ? <span className="bd" style={{ background: `${s.color}20`, color: s.color }}>{s.name}</span> : "—"; } },
+      { key: "probability", label: "Prob.", render: v => `${v || 0}%` },
+      { key: "expected_close_date", label: "Cierre Est.", render: v => fd(v) },
+    ]}
+    formFields={[
+      { key: "name", label: "Nombre *" }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "stage_id", label: "Etapa", type: "select", options: stgOpts },
+      { key: "amount", label: "Monto", type: "number" }, { key: "probability", label: "Prob. %", type: "number" }, { key: "expected_close_date", label: "Cierre Est.", type: "date" },
+      { key: "type", label: "Tipo", type: "select", options: OPP_TYPES }, { key: "priority", label: "Prioridad", type: "select", options: PRIORITIES }, { key: "source", label: "Fuente" },
+    ]}
+    newDefaults={{ type: "new_business", probability: 10, amount: 0, stage_id: data.stages[0]?.id, owner_id: user.id }}
+  />;
+  else if (view === "calendar") {
+    const evts = data.events;
+    const tasks4cal = data.tasks.filter(t => t.due_date && t.status !== "completed");
+    const now = new Date();
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    const fdy = new Date(y, m, 1).getDay(), dim = new Date(y, m + 1, 0).getDate(), dip = new Date(y, m, 0).getDate();
+    const days = [];
+    for (let i = fdy - 1; i >= 0; i--) days.push({ d: dip - i, c: false });
+    for (let i = 1; i <= dim; i++) days.push({ d: i, c: true });
+    while (days.length < 42) days.push({ d: days.length - fdy - dim + 1, c: false });
+    const getItems = (day, cur) => {
+      if (!cur) return [];
+      const dstr = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const e2 = evts.filter(ev => ds(ev.start_at) === dstr);
+      const t2 = tasks4cal.filter(t => ds(t.due_date) === dstr);
+      return [...e2.map(ev => ({ id: ev.id, label: ev.title, type: "event", color: "#7c3aed" })), ...t2.map(t => ({ id: t.id, label: t.title, type: "task", color: "#f97316" }))];
+    };
+    const isToday = (day, cur) => cur && day === now.getDate() && m === now.getMonth() && y === now.getFullYear();
+    const mn = calMonth.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+
+    content = (
+      <div className="fin">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className="btn btn-s btn-sm" onClick={() => setCalMonth(new Date(y, m - 1, 1))}>←</button>
+            <h3 style={{ fontSize: 15, textTransform: "capitalize", minWidth: 170, textAlign: "center", fontWeight: 700 }}>{mn}</h3>
+            <button className="btn btn-s btn-sm" onClick={() => setCalMonth(new Date(y, m + 1, 1))}>→</button>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <span style={{ fontSize: 10, display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#7c3aed", display: "inline-block" }} />Eventos</span>
+            <span style={{ fontSize: 10, display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f97316", display: "inline-block" }} />Tareas</span>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 1, background: "var(--bdr)", border: "1px solid var(--bdr)", borderRadius: "var(--r)", overflow: "hidden" }}>
+          {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map(d => <div key={d} style={{ background: "var(--bg3)", padding: 8, textAlign: "center", fontSize: 10, fontWeight: 600, color: "var(--tx2)" }}>{d}</div>)}
+          {days.map((d, i) => {
+            const items = getItems(d.d, d.c);
+            return (
+              <div key={i} style={{ background: "var(--bg2)", padding: 5, minHeight: 72, opacity: d.c ? 1 : 0.3, cursor: "pointer" }}>
+                <div style={{ fontSize: 10, fontWeight: 500, marginBottom: 2, ...(isToday(d.d, d.c) ? { background: "var(--ora)", color: "#fff", width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700 } : {}) }}>{d.d}</div>
+                {items.slice(0, 3).map(it => <div key={it.id} style={{ fontSize: 8, padding: "1px 4px", borderRadius: 3, marginBottom: 1, background: `${it.color}15`, color: it.color, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</div>)}
+                {items.length > 3 && <div style={{ fontSize: 8, color: "var(--tx3)" }}>+{items.length - 3}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+  else if (view === "activities") content = <ListModule title="Actividad" table="crm_activities" data={data.activities} reload={loadAll}
+    columns={[
+      { key: "type", label: "Tipo", render: v => <span className={`bd bd-${v === "call" ? "contacted" : v === "email" ? "sent" : "open"}`}>{v}</span> },
+      { key: "subject", label: "Asunto" },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+      { key: "contact_id", label: "Contacto", render: v => { const c = data.contacts.find(ct => ct.id === v); return c ? `${c.first_name} ${c.last_name || ""}` : "—"; } },
+      { key: "is_completed", label: "Estado", render: v => <span className={`bd bd-${v ? "completed" : "pending"}`}>{v ? "Completada" : "Pendiente"}</span> },
+      { key: "created_at", label: "Fecha", render: v => fd(v) },
+    ]}
+    formFields={[
+      { key: "type", label: "Tipo *", type: "select", options: ACT_TYPES }, { key: "subject", label: "Asunto" },
+      { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "contact_id", label: "Contacto", type: "select", options: ctcOpts },
+      { key: "opportunity_id", label: "Oportunidad", type: "select", options: oppOpts },
+      { key: "outcome", label: "Resultado" }, { key: "duration_min", label: "Duración (min)", type: "number" },
+      { key: "is_completed", label: "Completada", type: "select", options: [{ v: false, t: "No" }, { v: true, t: "Sí" }] },
+      { key: "description", label: "Descripción" },
+    ]}
+    newDefaults={{ type: "call", is_completed: false, owner_id: user.id }}
+  />;
+  else if (view === "conversations") content = <ListModule title="Conversación" table="crm_conversations" data={data.conversations} reload={loadAll}
+    columns={[
+      { key: "channel", label: "Canal", render: v => <span className={`bd bd-${v === "email" ? "sent" : v === "whatsapp" ? "qualified" : "open"}`}>{v}</span> },
+      { key: "direction", label: "Dir.", render: v => v === "inbound" ? "↓ Entrante" : "↑ Saliente" },
+      { key: "subject", label: "Asunto" },
+      { key: "contact_id", label: "Contacto", render: v => { const c = data.contacts.find(ct => ct.id === v); return c ? `${c.first_name} ${c.last_name || ""}` : "—"; } },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+      { key: "created_at", label: "Fecha", render: v => fd(v) },
+    ]}
+    formFields={[
+      { key: "channel", label: "Canal *", type: "select", options: CONV_CHANNELS }, { key: "direction", label: "Dir.", type: "select", options: CONV_DIR }, { key: "subject", label: "Asunto" },
+      { key: "from_address", label: "De" }, { key: "to_address", label: "Para" }, { key: "contact_id", label: "Contacto", type: "select", options: ctcOpts },
+      { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "duration_sec", label: "Duración", type: "number" }, { key: "body", label: "Mensaje" },
+    ]}
+    newDefaults={{ channel: "email", direction: "outbound", is_read: false, owner_id: user.id }}
+  />;
+  else if (view === "goals") content = <ListModule title="Meta" table="crm_goals" data={data.goals} reload={loadAll}
+    columns={[
+      { key: "name", label: "Meta" },
+      { key: "type", label: "Tipo", render: v => <span className={`bd bd-${v === "revenue" ? "won" : "open"}`}>{v}</span> },
+      { key: "target_value", label: "Objetivo", render: v => fm(v) },
+      { key: "current_value", label: "Actual", render: v => fm(v) },
+      { key: "period", label: "Período" },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+    ]}
+    formFields={[
+      { key: "name", label: "Nombre *" }, { key: "type", label: "Tipo", type: "select", options: GOAL_TYPES },
+      { key: "target_value", label: "Valor Objetivo", type: "number" }, { key: "current_value", label: "Valor Actual", type: "number" },
+      { key: "period", label: "Período", type: "select", options: GOAL_PERIODS },
+      { key: "start_date", label: "Inicio", type: "date" }, { key: "end_date", label: "Fin", type: "date" },
+      { key: "status", label: "Estado", type: "select", options: GOAL_STATUS },
+    ]}
+    newDefaults={{ type: "revenue", period: "monthly", status: "active", target_value: 0, current_value: 0, owner_id: user.id }}
+  />;
+  else if (view === "knowledge") content = <ListModule title="Artículo" table="crm_kb_articles" data={data.kb_articles} reload={loadAll}
+    columns={[
+      { key: "title", label: "Título" },
+      { key: "category", label: "Categoría" },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v === "published" ? "won" : v === "archived" ? "cancelled" : "draft"}`}>{v}</span> },
+      { key: "views_count", label: "Vistas" },
+      { key: "helpful_count", label: "Útil" },
+    ]}
+    formFields={[
+      { key: "title", label: "Título *" }, { key: "category", label: "Categoría" },
+      { key: "status", label: "Estado", type: "select", options: KB_STATUS },
+      { key: "content", label: "Contenido", type: "textarea" },
+    ]}
+    newDefaults={{ status: "draft", views_count: 0, helpful_count: 0, author_id: user.id }}
+  />;
+  else if (view === "transactions") content = <ListModule title="Transacción" table="crm_transactions" data={data.transactions} reload={loadAll}
+    columns={[
+      { key: "type", label: "Tipo", render: v => <span style={{ color: v === "income" ? "var(--grn)" : "var(--ora)", fontWeight: 700, fontSize: 14 }}>{v === "income" ? "↑" : "↓"}</span> },
+      { key: "category", label: "Categoría" },
+      { key: "description", label: "Descripción" },
+      { key: "amount", label: "Monto", render: (v, item) => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: item.type === "income" ? "var(--grn)" : "var(--ora)" }}>{(item.type === "income" ? "+" : "−") + fm(v)}</span> },
+      { key: "date", label: "Fecha", render: v => fd(v) },
+      { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
+    ]}
+    formFields={[
+      { key: "type", label: "Tipo *", type: "select", options: TX_TYPES }, { key: "category", label: "Categoría" }, { key: "amount", label: "Monto *", type: "number" },
+      { key: "date", label: "Fecha", type: "date" }, { key: "status", label: "Estado", type: "select", options: TX_STATUS },
+      { key: "account_id", label: "Cuenta", type: "select", options: accOpts },
+      { key: "description", label: "Descripción *" },
+    ]}
+    newDefaults={{ type: "income", status: "pending", amount: 0, date: ds(new Date()) }}
+  />;
+  else if (view === "forecasts") content = <ListModule title="Forecast" table="crm_forecasts" data={data.forecasts} reload={loadAll}
+    topButtons={<button className="btn btn-sm" style={{ background: "rgba(5,150,105,.08)", color: "var(--grn)", border: "1px solid rgba(5,150,105,.2)", fontSize: 10 }} onClick={generateForecast}>⚡ Auto-generar desde Pipeline</button>}
+    columns={[
+      { key: "period_label", label: "Período" },
+      { key: "committed", label: "Comprometido", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fm(v)}</span> },
+      { key: "best_case", label: "Mejor Caso", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", color: "var(--grn)" }}>{fm(v)}</span> },
+      { key: "most_likely", label: "Probable", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", color: "var(--acc)" }}>{fm(v)}</span> },
+      { key: "worst_case", label: "Peor Caso", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", color: "var(--red)" }}>{fm(v)}</span> },
+      { key: "closed", label: "Cerrado", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: "var(--grn)" }}>{fm(v)}</span> },
+    ]}
+    formFields={[
+      { key: "period_label", label: "Período *" }, { key: "start_date", label: "Inicio", type: "date" }, { key: "end_date", label: "Fin", type: "date" },
+      { key: "best_case", label: "Mejor Caso", type: "number" }, { key: "most_likely", label: "Probable", type: "number" }, { key: "worst_case", label: "Peor Caso", type: "number" },
+      { key: "committed", label: "Comprometido", type: "number" }, { key: "closed", label: "Cerrado", type: "number" },
+      { key: "notes", label: "Notas" },
+    ]}
+    newDefaults={{ best_case: 0, most_likely: 0, worst_case: 0, committed: 0, closed: 0, owner_id: user.id }}
+  />;
+  else if (view === "teams") content = <ListModule title="Equipo" table="crm_teams" data={data.teams} reload={loadAll}
+    columns={[
+      { key: "name", label: "Equipo" },
+      { key: "description", label: "Descripción" },
+      { key: "manager_id", label: "Manager", render: v => { const u = data.teams.length ? null : null; return "—"; } },
+    ]}
+    formFields={[
+      { key: "name", label: "Nombre *" },
+      { key: "description", label: "Descripción" },
+    ]}
+    newDefaults={{}}
+  />;
+  else if (view === "territories") content = <ListModule title="Territorio" table="crm_territories" data={data.territories} reload={loadAll}
+    columns={[
+      { key: "name", label: "Territorio" },
+      { key: "region", label: "Región" },
+      { key: "country", label: "País" },
+    ]}
+    formFields={[
+      { key: "name", label: "Nombre *" }, { key: "region", label: "Región" }, { key: "country", label: "País" },
+      { key: "description", label: "Descripción" },
+    ]}
+    newDefaults={{}}
+  />;
+  else if (view === "automations") content = <ListModule title="Automatización" table="crm_automations" data={data.automations} reload={loadAll}
+    columns={[
+      { key: "name", label: "Nombre" },
+      { key: "trigger_type", label: "Trigger", render: v => <span className={`bd bd-${v?.includes("overdue") ? "critical" : "open"}`}>{v}</span> },
+      { key: "is_active", label: "Activa", render: v => <span className={`bd bd-${v ? "won" : "cancelled"}`}>{v ? "Sí" : "No"}</span> },
+      { key: "runs_count", label: "Ejecuciones" },
+      { key: "last_run_at", label: "Última Ejecución", render: v => fd(v) },
+    ]}
+    formFields={[
+      { key: "name", label: "Nombre *" }, { key: "trigger_type", label: "Trigger", type: "select", options: AUTOMATION_TRIGGERS },
+      { key: "is_active", label: "Activa", type: "select", options: [{ v: true, t: "Sí" }, { v: false, t: "No" }] },
+      { key: "description", label: "Descripción" },
+    ]}
+    newDefaults={{ trigger_type: "lead_created", is_active: true, runs_count: 0, created_by: user.id }}
+  />;
+  else if (view === "surveys") content = <ListModule title="Encuesta" table="crm_surveys" data={data.surveys} reload={loadAll}
+    columns={[
+      { key: "type", label: "Tipo", render: v => <span className="bd bd-open">{(v || "").toUpperCase()}</span> },
+      { key: "score", label: "Puntaje", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: v >= 8 ? "var(--grn)" : v >= 5 ? "var(--ora)" : "var(--red)" }}>{v}/10</span> },
+      { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
+      { key: "comment", label: "Comentario" },
+      { key: "responded_at", label: "Fecha", render: v => fd(v) },
+    ]}
+    formFields={[
+      { key: "type", label: "Tipo", type: "select", options: SURVEY_TYPES }, { key: "score", label: "Puntaje (1-10)", type: "number" },
+      { key: "account_id", label: "Cuenta", type: "select", options: accOpts },
+      { key: "contact_id", label: "Contacto", type: "select", options: ctcOpts },
+      { key: "ticket_id", label: "Ticket", type: "select", options: [{ v: "", t: "— Ninguno —" }, ...data.tickets.map(t => ({ v: t.id, t: t.ticket_number + " - " + t.subject }))] },
+      { key: "responded_at", label: "Fecha Respuesta", type: "date" },
+      { key: "comment", label: "Comentario" },
+    ]}
+    newDefaults={{ type: "csat", score: 5, responded_at: ds(new Date()) }}
+  />;
+
+  return (
+    <>
+      <style>{css}</style>
+      <div className="crm">
+        <aside className="sb">
+          <div className="sb-hd">PLATINUM<span>CRM</span></div>
+          <nav className="sb-nv">
+            {(() => {
+              const groups = { principal: "Principal", comercial: "Comercial", operaciones: "Operaciones", soporte: "Soporte", finanzas: "Finanzas", comunicación: "Comunicación", analytics: "Analytics", admin: "Administración" };
+              let lastGroup = "";
+              return NAV.map(n => {
+                const items = [];
+                if (n.group !== lastGroup) { lastGroup = n.group; items.push(<div key={"g-" + n.group} style={{ fontSize: 7, fontWeight: 800, color: "var(--tx3)", textTransform: "uppercase", letterSpacing: 1.2, padding: "4px 10px 0px", marginTop: 1 }}>{groups[n.group] || n.group}</div>); }
+                items.push(<button key={n.id} className={`sb-it${view === n.id ? " ac" : ""}`} onClick={() => setView(n.id)}><Ic name={n.icon} size={14} /><span>{n.label}</span></button>);
+                return items;
+              }).flat();
+            })()}
+          </nav>
+          <div className="sb-ft">
+            <div className="sb-av">{user.avatar}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>
+              <div style={{ fontSize: 9, color: "var(--tx3)" }}>{user.role} · {user.region}</div>
+            </div>
+            <button onClick={() => setUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--tx3)" }} title="Salir"><Ic name="logout" size={15} /></button>
+          </div>
+        </aside>
+        <div className="mn">
+          <div className="tp"><h1>{pg}</h1><div className="tp-dt">{new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div></div>
+          <div className="pg">{content}</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
