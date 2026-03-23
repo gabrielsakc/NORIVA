@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noriva CRM – El CRM que escala con tu equipo comercial</title>
+<meta name="description" content="Gestiona leads, pipeline y revenue desde un solo lugar. CRM B2B diseñado para equipos de ventas de alto rendimiento.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--surface-low:#f8fafc;--surface:#f1f5f9;--surface-high:#e2e8f0;--surface-highest:#cbd5e1;
+  --on-bg:#0f172a;--on-surface-variant:#475569;--outline:#94a3b8;--outline-variant:#cbd5e1;
+  --primary:#f97316;--primary-dark:#ea580c;--secondary:#ef4444;--tertiary:#10b981;--error:#ef4444;
+  --green:#10b981;--blue:#3b82f6;--purple:#8b5cf6;
+  --radius-md:12px;--radius-lg:16px;--radius-xl:24px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--on-bg);font-family:'Inter',sans-serif;line-height:1.6;overflow-x:hidden}
+h1,h2,h3,.headline{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:rgba(6,14,32,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(64,72,93,.3);padding:0 5%;display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.2rem;color:var(--primary);letter-spacing:.03em;display:flex;align-items:center;gap:.45rem}
+.nav-logo-kana{font-size:.75rem;font-weight:400;color:var(--on-surface-variant);letter-spacing:.18em;font-family:'Inter',sans-serif;opacity:.75}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{color:var(--on-surface-variant);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--on-bg)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#ffffff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;padding:.6rem 1.4rem;border-radius:var(--radius-md);border:none;cursor:pointer;font-size:.9rem;text-decoration:none;transition:opacity .2s;white-space:nowrap}
+.btn-primary:hover{opacity:.85}
+.btn-ghost{color:var(--primary);border:1px solid rgba(109,117,140,.3);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;padding:.6rem 1.4rem;border-radius:var(--radius-md);cursor:pointer;font-size:.9rem;text-decoration:none;transition:background .2s;white-space:nowrap}
+.btn-ghost:hover{background:var(--surface-high)}
+
+/* ── HERO ── */
+.hero{min-height:90vh;display:flex;align-items:center;padding:6rem 5% 4rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 60% 40%,rgba(37,99,235,.12) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 20% 70%,rgba(255,145,83,.08) 0%,transparent 60%);pointer-events:none}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(64,72,93,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(64,72,93,.15) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+.hero-content{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;max-width:1300px;margin:0 auto;width:100%;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid rgba(255,145,83,.25);padding:.35rem .9rem;border-radius:50px;font-size:.8rem;color:var(--primary);font-weight:600;margin-bottom:1.5rem}
+.hero-badge span{width:6px;height:6px;background:var(--primary);border-radius:50%;display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:clamp(2.2rem,4vw,3.8rem);line-height:1.1;color:var(--on-bg);margin-bottom:1.2rem}
+.hero h1 .accent{color:var(--primary)}
+.hero-sub{color:var(--on-surface-variant);font-size:1.1rem;max-width:520px;margin-bottom:2rem}
+.hero-ctas{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2.5rem}
+.hero-ctas .btn-primary{padding:.85rem 2rem;font-size:1rem}
+.hero-ctas .btn-ghost{padding:.85rem 2rem;font-size:1rem}
+.trust-badges{display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center}
+.trust-badge{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--on-surface-variant)}
+.trust-badge svg{color:var(--primary)}
+
+/* dashboard mockup */
+.hero-visual{position:relative}
+.dash-card{background:var(--surface);border:1px solid rgba(64,72,93,.3);border-radius:var(--radius-xl);padding:1.5rem;box-shadow:0 40px 80px rgba(0,0,0,.6);transform:perspective(1000px) rotateY(-8deg) rotateX(4deg);transition:transform .4s}
+.dash-card:hover{transform:perspective(1000px) rotateY(-4deg) rotateX(2deg)}
+.dash-header{font-size:.75rem;color:var(--on-surface-variant);margin-bottom:1rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.dash-stats{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.2rem}
+.stat-card{background:var(--surface-high);border-radius:var(--radius-md);padding:.85rem}
+.stat-label{font-size:.7rem;color:var(--on-surface-variant);margin-bottom:.3rem;letter-spacing:.04em;text-transform:uppercase}
+.stat-value{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem}
+.stat-value.blue{color:var(--secondary)}
+.stat-value.green{color:var(--tertiary)}
+.stat-value.orange{color:var(--primary)}
+.stat-value.purple{color:#b57bff}
+.stat-delta{font-size:.72rem;margin-top:.15rem}
+.stat-delta.up{color:var(--tertiary)}
+.dash-pipeline{margin-top:1rem}
+.pipe-label{font-size:.7rem;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
+.pipe-stages{display:flex;gap:.5rem}
+.pipe-stage{flex:1;text-align:center}
+.pipe-stage-bar{height:6px;border-radius:3px;margin-bottom:.4rem}
+.pipe-stage-name{font-size:.65rem;color:var(--on-surface-variant)}
+.pipe-stage-val{font-size:.68rem;font-weight:600;color:var(--on-bg)}
+
+/* ── METRICS STRIP ── */
+.metrics{padding:3.5rem 5%;background:var(--surface-low)}
+.metrics-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;text-align:center}
+.metric-item{}
+.metric-value{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:2.5rem;margin-bottom:.2rem}
+.metric-value.orange{color:var(--primary)}
+.metric-value.blue{color:var(--secondary)}
+.metric-value.green{color:var(--tertiary)}
+.metric-value.purple{color:#b57bff}
+.metric-label{font-size:.85rem;color:var(--on-surface-variant)}
+
+/* ── FEATURES ── */
+.features{padding:6rem 5%;background:var(--bg)}
+.section-header{text-align:center;max-width:680px;margin:0 auto 3.5rem}
+.section-tag{font-size:.8rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem}
+.section-title{font-size:clamp(1.8rem,3vw,2.6rem);color:var(--on-bg);margin-bottom:.8rem}
+.section-sub{color:var(--on-surface-variant);font-size:1rem}
+.features-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.feature-card{background:var(--surface);border-radius:var(--radius-lg);padding:1.8rem;transition:background .25s,transform .25s}
+.feature-card:hover{background:var(--surface-high);transform:translateY(-4px)}
+.feature-icon{width:44px;height:44px;background:rgba(255,145,83,.12);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem}
+.feature-icon svg{color:var(--primary)}
+.feature-card h3{font-size:1.05rem;color:var(--on-bg);margin-bottom:.5rem}
+.feature-card p{font-size:.88rem;color:var(--on-surface-variant);line-height:1.65}
+
+/* ── ANALYTICS ── */
+.analytics{padding:6rem 5%;background:var(--surface-low)}
+.analytics-inner{max-width:1200px;margin:0 auto}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2.5rem}
+.chart-card{background:var(--surface);border-radius:var(--radius-xl);padding:2rem}
+.chart-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1rem;color:var(--on-bg);margin-bottom:1.5rem}
+
+/* BAR CHART */
+.bar-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.9rem}
+.bar-row-label{font-size:.78rem;color:var(--on-surface-variant);width:90px;text-align:right;flex-shrink:0}
+.bar-track{flex:1;background:var(--surface-high);border-radius:4px;height:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .8s ease}
+.bar-row-val{font-size:.78rem;font-weight:600;color:var(--on-bg);width:52px;flex-shrink:0}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:2rem}
+.donut-legend{display:flex;flex-direction:column;gap:.65rem;flex:1}
+.legend-item{display:flex;align-items:center;gap:.6rem;font-size:.82rem}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-label{color:var(--on-surface-variant);flex:1}
+.legend-pct{font-weight:600;color:var(--on-bg)}
+
+/* ── PIPELINE KB ── */
+.pipeline-section{padding:6rem 5%;background:var(--bg)}
+.kanban-wrap{max-width:1200px;margin:2.5rem auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.kb-col{background:var(--surface);border-radius:var(--radius-lg);padding:1rem}
+.kb-col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.kb-col-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.kb-badge{font-size:.72rem;background:var(--surface-high);border-radius:50px;padding:.15rem .55rem;color:var(--on-surface-variant)}
+.kb-card{background:var(--surface-high);border-radius:var(--radius-md);padding:.9rem;margin-bottom:.65rem;cursor:default;transition:background .2s}
+.kb-card:hover{background:var(--surface-highest)}
+.kb-company{font-size:.72rem;color:var(--on-surface-variant);margin-bottom:.25rem}
+.kb-deal{font-size:.85rem;font-weight:600;color:var(--on-bg);margin-bottom:.4rem}
+.kb-amount{font-size:.8rem;font-weight:700}
+
+/* ── PRICING ── */
+.pricing{padding:6rem 5%;background:var(--surface-low)}
+.pricing-grid{max-width:1100px;margin:2.5rem auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;align-items:stretch}
+.pricing-card{background:var(--surface);border-radius:var(--radius-xl);padding:2rem;display:flex;flex-direction:column;position:relative}
+.pricing-card.featured{background:linear-gradient(160deg,rgba(255,145,83,.08),rgba(37,99,235,.06));border:1px solid rgba(255,145,83,.35)}
+.pricing-card.featured::before{content:'MÁS POPULAR';position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#ffffff;font-size:.68rem;font-weight:800;padding:.25rem .9rem;border-radius:50px;letter-spacing:.06em}
+.pricing-tier{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--primary);margin-bottom:.6rem}
+.pricing-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.5rem;color:var(--on-bg);margin-bottom:.3rem}
+.pricing-desc{font-size:.82rem;color:var(--on-surface-variant);margin-bottom:1.5rem}
+.pricing-price{margin-bottom:1.5rem}
+.pricing-price .amount{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:2.2rem;color:var(--on-bg)}
+.pricing-price .period{font-size:.82rem;color:var(--on-surface-variant)}
+.pricing-features{list-style:none;margin-bottom:2rem;flex:1;display:flex;flex-direction:column;gap:.6rem}
+.pricing-features li{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:var(--on-surface-variant)}
+.pricing-features li svg{flex-shrink:0;margin-top:2px;color:var(--tertiary)}
+.pricing-cta{display:block;text-align:center;padding:.85rem;border-radius:var(--radius-md);font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.95rem;text-decoration:none;transition:opacity .2s}
+.pricing-cta.solid{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#ffffff}
+.pricing-cta.outline{border:1px solid rgba(109,117,140,.3);color:var(--primary)}
+.pricing-cta:hover{opacity:.8}
+
+/* ── CTA BANNER ── */
+.cta-banner{padding:5rem 5%;text-align:center;background:var(--bg);position:relative;overflow:hidden}
+.cta-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 50% 50%,rgba(255,145,83,.08),transparent 70%)}
+.cta-banner h2{font-size:clamp(1.8rem,3vw,2.8rem);color:var(--on-bg);margin-bottom:1rem;position:relative}
+.cta-banner p{color:var(--on-surface-variant);margin-bottom:2rem;font-size:1rem;position:relative}
+.cta-banner .btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative}
+.cta-banner .btn-primary,.cta-banner .btn-ghost{padding:.9rem 2.2rem;font-size:1rem}
+
+/* ── FOOTER ── */
+footer{background:var(--surface-low);padding:3rem 5% 2rem;border-top:1px solid rgba(64,72,93,.25)}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem}
+.footer-brand p{color:var(--on-surface-variant);font-size:.85rem;margin-top:.7rem;max-width:260px;line-height:1.7}
+.footer-col h4{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--on-bg);margin-bottom:1rem}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:.55rem}
+.footer-col a{color:var(--on-surface-variant);text-decoration:none;font-size:.83rem;transition:color .2s}
+.footer-col a:hover{color:var(--on-bg)}
+.footer-bottom{max-width:1200px;margin:2rem auto 0;padding-top:1.5rem;border-top:1px solid rgba(64,72,93,.2);display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--on-surface-variant)}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .hero-content{grid-template-columns:1fr}
+  .hero-visual{display:none}
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+  .analytics-grid{grid-template-columns:1fr}
+  .kanban-wrap{grid-template-columns:repeat(2,1fr)}
+  .pricing-grid{grid-template-columns:1fr}
+  .footer-inner{grid-template-columns:1fr 1fr}
+  .metrics-inner{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .nav-links{display:none}
+  .features-grid{grid-template-columns:1fr}
+  .kanban-wrap{grid-template-columns:1fr}
+  .metrics-inner{grid-template-columns:1fr}
+  .footer-inner{grid-template-columns:1fr}
+  .footer-bottom{flex-direction:column;gap:.5rem;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo" style="text-decoration:none; flex-direction:column; align-items:flex-start; gap:0.5rem; margin-top: 1rem;">
+    <img src="images/logo.png" alt="NORIVA Logo" style="height: 80px; width: auto; max-width: 100%; object-fit: contain; border-radius: 4px;">
+    <span style="color: #ffffff; font-size: 2.2rem; font-weight: 800; line-height: 1;">NORIVA CRM <span class="nav-logo-kana" style="font-size: 1.2rem; color: #cbd5e1; margin-left: 4px;">ノリバ</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#analytics">Analytics</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#" style="color:var(--on-surface-variant)">Recursos</a></li>
+  </ul>
+  <a href="app.html" class="btn-primary">Comenzar Gratis →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-badge"><span></span>Nuevo: Pipeline AI Forecasting disponible</div>
+      <h1>El CRM que <span class="accent">escala</span> con tu equipo comercial</h1>
+      <p class="hero-sub">Gestiona leads, pipeline y revenue desde un solo lugar. Diseñado para equipos de ventas B2B que quieren cerrar más rápido.</p>
+      <div class="hero-ctas">
+        <a href="app.html" class="btn-primary">🚀 Comenzar Gratis</a>
+        <a href="#analytics" class="btn-ghost">Ver Demo →</a>
+      </div>
+      <div class="trust-badges">
+        <div class="trust-badge">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8z"/></svg>
+          +500 Empresas
+        </div>
+        <div class="trust-badge">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          98% Satisfacción
+        </div>
+        <div class="trust-badge">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Setup en 5 min
+        </div>
+        <div class="trust-badge">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          SSL Seguro
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual" style="display:flex; justify-content:center; align-items:center;">
+      <img src="images/logo.png" alt="NORIVA Logo Large" style="height: 400px; width: auto; max-width: 100%; object-fit: contain; border-radius: 8px; filter: drop-shadow(0 0 20px rgba(0,0,0,0.3));">
+    </div>
+  </div>
+</section>
+
+<!-- METRICS -->
+<section class="metrics">
+  <div class="metrics-inner">
+    <div class="metric-item">
+      <div class="metric-value orange" data-target="500" data-prefix="+" data-suffix=" Empresas">+500 Empresas</div>
+      <div class="metric-label">confían en Noriva CRM</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value blue" data-target="48" data-prefix="$" data-suffix="M Pipeline">$48M Pipeline</div>
+      <div class="metric-label">gestionado mensualmente</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value green" data-target="98" data-prefix="" data-suffix="% Satisfacción">98% Satisfacción</div>
+      <div class="metric-label">en clientes activos</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value purple" data-target="15" data-prefix="" data-suffix="min Setup">15min Setup</div>
+      <div class="metric-label">para estar operativo</div>
+    </div>
+  </div>
+</section>
+
+<!-- VISUAL TOUR 1 -->
+<section class="visual-tour" style="padding: 6rem 5%; background: var(--bg);">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 6rem;">
+      <img src="images/Oficina Corporativa Noriva Realista.jpeg" alt="Oficina Corporativa Noriva" style="width: 100%; border-radius: var(--radius-xl); box-shadow: 0 20px 40px rgba(0,0,0,0.1); object-fit: cover; aspect-ratio: 4/3;">
+      <div>
+        <div class="section-tag">Diseño Corporativo</div>
+        <h2 class="section-title">El entorno de trabajo del futuro</h2>
+        <p class="section-sub">Noriva CRM refleja el profesionalismo de tu organización. Diseñado para corporativos exigentes que buscan la excelencia y eficiencia en cada detalle de su operación.</p>
+      </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+      <div style="order: 2;">
+        <img src="images/Foto_profesional_ultrarrealista_202603221900.png" alt="Profesional usando Noriva" style="width: 100%; border-radius: var(--radius-xl); box-shadow: 0 20px 40px rgba(0,0,0,0.1); object-fit: cover; aspect-ratio: 4/3;">
+      </div>
+      <div style="order: 1;">
+        <div class="section-tag">Alto Rendimiento</div>
+        <h2 class="section-title">Potencia a tus ejecutivos de ventas</h2>
+        <p class="section-sub">Tus agentes comerciales tendrán todas las herramientas necesarias para cerrar acuerdos más rápido. Una interfaz intuitiva que elimina la fricción y maximiza la productividad.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-header">
+    <div class="section-tag">Plataforma</div>
+    <h2 class="section-title">Todo lo que tu equipo necesita</h2>
+    <p class="section-sub">Herramientas diseñadas para equipos comerciales de alto rendimiento. Del primer contacto al cierre, en una sola plataforma.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3>Pipeline Visual</h3>
+      <p>Tablero kanban con drag &amp; drop. Mueve deals entre etapas en segundos y visualiza el estado de cada oportunidad de un vistazo.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h3>Lead Scoring</h3>
+      <p>Califica leads automáticamente según comportamiento y perfil. Prioriza los contactos con mayor potencial de conversión.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <h3>Forecasting</h3>
+      <p>Predice tu revenue mensual con modelos basados en el stage y probabilidad de cada oportunidad. Forecasts en tiempo real.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <h3>360° Cuentas</h3>
+      <p>Cada cuenta con su historial completo: contactos, oportunidades, actividades y tickets en un solo lugar. Sin silos de información.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      <h3>Facturación</h3>
+      <p>De cotización a factura en un click. Controla el ciclo comercial completo sin salir del CRM. Integración con tus sistemas contables.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <h3>Soporte Tickets</h3>
+      <p>Sistema de tickets integrado al CRM. Resuelve y trackea problemas de clientes vinculados a su cuenta y oportunidades.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYTICS -->
+<section class="analytics" id="analytics">
+  <div class="analytics-inner">
+    <div class="section-header" style="text-align:center;margin:0 auto 0">
+      <div class="section-tag">Analytics</div>
+      <h2 class="section-title">Pipeline en tiempo real</h2>
+      <p class="section-sub">Visualiza el estado de tu pipeline, fuentes de leads y métricas clave — actualizadas en tiempo real.</p>
+    </div>
+    <div class="analytics-grid">
+      <!-- BAR CHART -->
+      <div class="chart-card">
+        <div class="chart-title">Pipeline por Etapa</div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-row-label">Calificación</div>
+            <div class="bar-track"><div class="bar-fill" data-width="23" style="background:#f97316;width:0%"></div></div>
+            <div class="bar-row-val">$48K</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-row-label">Propuesta</div>
+            <div class="bar-track"><div class="bar-fill" data-width="57" style="background:#ef4444;width:0%"></div></div>
+            <div class="bar-row-val">$120K</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-row-label">Negociación</div>
+            <div class="bar-track"><div class="bar-fill" data-width="40" style="background:#10b981;width:0%"></div></div>
+            <div class="bar-row-val">$85K</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-row-label">Cierre</div>
+            <div class="bar-track"><div class="bar-fill" data-width="100" style="background:#3b82f6;width:0%"></div></div>
+            <div class="bar-row-val">$210K</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-row-label">Ganado</div>
+            <div class="bar-track"><div class="bar-fill" data-width="45" style="background:#8b5cf6;width:0%"></div></div>
+            <div class="bar-row-val">$95K</div>
+          </div>
+        </div>
+      </div>
+      <!-- DONUT -->
+      <div class="chart-card">
+        <div class="chart-title">Leads por Fuente</div>
+        <div class="donut-wrap">
+          <svg width="160" height="160" viewBox="0 0 160 160" id="donut-svg">
+            <!-- segments filled by JS -->
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div><span class="legend-label">Web</span><span class="legend-pct">35%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span class="legend-label">LinkedIn</span><span class="legend-pct">28%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><span class="legend-label">Referido</span><span class="legend-pct">18%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span class="legend-label">Cold Call</span><span class="legend-pct">12%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div><span class="legend-label">Evento</span><span class="legend-pct">7%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KANBAN PREVIEW -->
+<section class="pipeline-section" id="pipeline">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-header">
+      <div class="section-tag">Pipeline</div>
+      <h2 class="section-title">Gestión Visual de Oportunidades</h2>
+      <p class="section-sub">Vista kanban en tiempo real. Arrastra y suelta para mover deals entre etapas.</p>
+    </div>
+  </div>
+  <div class="kanban-wrap">
+    <div class="kb-col">
+      <div class="kb-col-header">
+        <span class="kb-col-title" style="color:#f97316">Calificación</span>
+        <span class="kb-badge">3</span>
+      </div>
+      <div class="kb-card"><div class="kb-company">TechSec S.A.</div><div class="kb-deal">SOC Managed Services</div><div class="kb-amount" style="color:#f97316">$12,000</div></div>
+      <div class="kb-card"><div class="kb-company">CyberShield MX</div><div class="kb-deal">Pentesting Anual</div><div class="kb-amount" style="color:#f97316">$18,500</div></div>
+      <div class="kb-card"><div class="kb-company">DataGuard Co.</div><div class="kb-deal">SIEM Implementation</div><div class="kb-amount" style="color:#f97316">$8,200</div></div>
+    </div>
+    <div class="kb-col">
+      <div class="kb-col-header">
+        <span class="kb-col-title" style="color:#ef4444">Propuesta</span>
+        <span class="kb-badge">2</span>
+      </div>
+      <div class="kb-card"><div class="kb-company">SecureNet Latam</div><div class="kb-deal">Cloud Security Audit</div><div class="kb-amount" style="color:#ef4444">$45,000</div></div>
+      <div class="kb-card"><div class="kb-company">FinProtect SA</div><div class="kb-deal">Compliance NIST</div><div class="kb-amount" style="color:#ef4444">$32,000</div></div>
+    </div>
+    <div class="kb-col">
+      <div class="kb-col-header">
+        <span class="kb-col-title" style="color:#10b981">Negociación</span>
+        <span class="kb-badge">2</span>
+      </div>
+      <div class="kb-card"><div class="kb-company">GlobalCorp Inc.</div><div class="kb-deal">Zero Trust Deploy</div><div class="kb-amount" style="color:#10b981">$72,000</div></div>
+      <div class="kb-card"><div class="kb-company">Infraestructura GT</div><div class="kb-deal">Red Team Ejercicio</div><div class="kb-amount" style="color:#10b981">$28,500</div></div>
+    </div>
+    <div class="kb-col">
+      <div class="kb-col-header">
+        <span class="kb-col-title" style="color:#8b5cf6">Ganado ✓</span>
+        <span class="kb-badge">3</span>
+      </div>
+      <div class="kb-card"><div class="kb-company">BankSec CR</div><div class="kb-deal">MDR Anual</div><div class="kb-amount" style="color:#8b5cf6">$120,000</div></div>
+      <div class="kb-card"><div class="kb-company">GovTech MX</div><div class="kb-deal">Seguridad OT</div><div class="kb-amount" style="color:#8b5cf6">$85,000</div></div>
+      <div class="kb-card"><div class="kb-company">RetailSafe</div><div class="kb-deal">PCI-DSS Audit</div><div class="kb-amount" style="color:#8b5cf6">$38,000</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-header">
+    <div class="section-tag">Planes</div>
+    <h2 class="section-title">Precio claro, sin sorpresas</h2>
+    <p class="section-sub">Escala con tu equipo. Comienza gratis y actualiza cuando lo necesites.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="pricing-tier">Starter</div>
+      <div class="pricing-name">Básico</div>
+      <div class="pricing-desc">Para equipos pequeños que están comenzando.</div>
+      <div class="pricing-price"><span class="amount">$0</span><span class="period"> / mes</span></div>
+      <ul class="pricing-features">
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Hasta 3 usuarios</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>500 contactos</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Pipeline básico</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard resumido</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Soporte por email</li>
+      </ul>
+      <a href="app.html" class="pricing-cta outline">Comenzar Gratis</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pricing-tier">Pro</div>
+      <div class="pricing-name">Profesional</div>
+      <div class="pricing-desc">Para equipos de ventas en crecimiento activo.</div>
+      <div class="pricing-price"><span class="amount">$99</span><span class="period"> / usuario / mes</span></div>
+      <ul class="pricing-features">
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Usuarios ilimitados</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Contactos ilimitados</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Pipeline avanzado + Forecasting</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Lead Scoring automático</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Facturación integrada</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Soporte prioritario 24/7</li>
+      </ul>
+      <a href="app.html" class="pricing-cta solid">Comenzar Ahora</a>
+    </div>
+    <div class="pricing-card">
+      <div class="pricing-tier">Enterprise</div>
+      <div class="pricing-name">Empresarial</div>
+      <div class="pricing-desc">Para organizaciones con necesidades avanzadas y escala.</div>
+      <div class="pricing-price"><span class="amount">Custom</span></div>
+      <ul class="pricing-features">
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Todo en Pro</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>SSO &amp; SAML</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Roles y permisos custom</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>API completa + Webhooks</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Onboarding dedicado</li>
+        <li><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>SLA garantizado</li>
+      </ul>
+      <a href="mailto:ventas@norivacrm.com" class="pricing-cta outline">Contactar Ventas</a>
+    </div>
+  </div>
+</section>
+
+<!-- VISUAL TOUR 2 -->
+<section class="visual-tour-2" style="padding: 6rem 5%; background: var(--surface-low);">
+  <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+    <div class="section-tag" style="margin-bottom: 2rem;">Experiencia Única</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch;">
+      <div>
+        <img src="images/Foto_cercana,_ultrarrealista,_202603221904.png" alt="Detalle CRM 1" style="width: 100%; height: 100%; max-height: 400px; border-radius: var(--radius-lg); box-shadow: 0 10px 30px rgba(0,0,0,0.08); object-fit: cover;">
+      </div>
+      <div>
+        <img src="images/Foto_cercana,_ultrarrealista,_202603221904 (1).png" alt="Detalle CRM 2" style="width: 100%; height: 100%; max-height: 400px; border-radius: var(--radius-lg); box-shadow: 0 10px 30px rgba(0,0,0,0.08); object-fit: cover;">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+  <h2>¿Listo para cerrar más deals?</h2>
+  <p>Únete a +500 equipos comerciales que gestionan su revenue con Noriva CRM.</p>
+  <div class="btns">
+    <a href="app.html" class="btn-primary">🚀 Comenzar Gratis — sin tarjeta</a>
+    <a href="#" class="btn-ghost">Agendar Demo</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="text-decoration:none; flex-direction:column; align-items:flex-start; gap:0.5rem; margin-top: 1rem;">
+        <img src="images/logo.png" alt="NORIVA Logo" style="height: 80px; width: auto; max-width: 100%; object-fit: contain; border-radius: 4px;">
+        <span style="color: #ffffff; font-size: 2.2rem; font-weight: 800; line-height: 1;">NORIVA CRM <span class="nav-logo-kana" style="font-size: 1.2rem; color: #cbd5e1; margin-left: 4px;">ノリバ</span></span>
+      </a>
+      <p>El CRM diseñado para equipos de ventas B2B que quieren escalar sin complejidad.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Producto</h4>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#analytics">Analytics</a></li>
+        <li><a href="#pricing">Precios</a></li>
+        <li><a href="#">Integraciones</a></li>
+        <li><a href="#">Roadmap</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Empresa</h4>
+      <ul>
+        <li><a href="#">Sobre nosotros</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Casos de éxito</a></li>
+        <li><a href="#">Partners</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Soporte</h4>
+      <ul>
+        <li><a href="#">Documentación</a></li>
+        <li><a href="#">API Docs</a></li>
+        <li><a href="#">Status</a></li>
+        <li><a href="mailto:ventas@norivacrm.com">Contacto</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Noriva CRM ノリバ. Todos los derechos reservados.</span>
+    <span style="display:flex;gap:1.5rem"><a href="#" style="color:var(--on-surface-variant);text-decoration:none">Privacidad</a><a href="#" style="color:var(--on-surface-variant);text-decoration:none">Términos</a></span>
+  </div>
+</footer>
+
+<script>
+// ── Donut chart SVG ──
+(function(){
+  const data=[{pct:.35,color:'#f97316'},{pct:.28,color:'#ef4444'},{pct:.18,color:'#10b981'},{pct:.12,color:'#3b82f6'},{pct:.07,color:'#8b5cf6'}];
+  const svg=document.getElementById('donut-svg');
+  const cx=80,cy=80,r=60,inner=36;
+  let angle=-Math.PI/2;
+  data.forEach(d=>{
+    const end=angle+d.pct*2*Math.PI;
+    const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+    const x2=cx+r*Math.cos(end),y2=cy+r*Math.sin(end);
+    const xi1=cx+inner*Math.cos(angle),yi1=cy+inner*Math.sin(angle);
+    const xi2=cx+inner*Math.cos(end),yi2=cy+inner*Math.sin(end);
+    const large=d.pct>.5?1:0;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${xi1} ${yi1} L${x1} ${y1} A${r} ${r} 0 ${large} 1 ${x2} ${y2} L${xi2} ${yi2} A${inner} ${inner} 0 ${large} 0 ${xi1} ${yi1}`);
+    path.setAttribute('fill',d.color);
+    path.style.opacity='.9';
+    svg.appendChild(path);
+    angle=end;
+  });
+  // center text
+  const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('x','80');t.setAttribute('y','84');
+  t.setAttribute('text-anchor','middle');t.setAttribute('font-size','13');
+  t.setAttribute('font-weight','700');  t.setAttribute('fill','#0f172a');
+  t.setAttribute('font-family','Plus Jakarta Sans, sans-serif');
+  t.textContent='Fuentes';
+  svg.appendChild(t);
+})();
+
+// ── Animate bars on scroll ──
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.bar-fill').forEach(b=>{
+        b.style.width=b.dataset.width+'%';
+      });
+      observer.unobserve(e.target);
+    }
+  });
+},{threshold:.3});
+document.querySelectorAll('.bar-chart').forEach(el=>observer.observe(el));
+
+// ── Animate counters ──
+function animateCount(el,target,prefix,suffix){
+  let cur=0;
+  const step=target/60;
+  const timer=setInterval(()=>{
+    cur=Math.min(cur+step,target);
+    el.textContent=prefix+Math.round(cur)+suffix;
+    if(cur>=target)clearInterval(timer);
+  },16);
+}
+const metricObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('[data-target]').forEach(el=>{
+        const t=+el.dataset.target,p=el.dataset.prefix||'',s=el.dataset.suffix||'';
+        animateCount(el,t,p,s);
+      });
+      metricObserver.unobserve(e.target);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.metrics').forEach(el=>metricObserver.observe(el));
+</script>
+</body>
+</html>
+
