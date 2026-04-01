@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,8 +11,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.2/babel.min.js"></script>
+<script src="i18n.js"></script>
 <script type="text/babel" data-type="module">
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback, useContext, createContext } = React;
 
 // ═══ SUPABASE CONFIG ═══
 const SB = "https://pmxpmzhqoqnlhlytmzzy.supabase.co";
@@ -30,6 +31,13 @@ const fm = n => new Intl.NumberFormat("es-AR", { style: "currency", currency: "U
 const fd = d => { if (!d) return "—"; try { return new Date(d).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" }) } catch { return d } };
 const ds = d => d ? (typeof d === "string" ? d.slice(0, 10) : new Date(d).toISOString().slice(0, 10)) : "";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// ═══ LANGUAGE SYSTEM ═══
+const LangContext = createContext({ lang: "es", t: k => k });
+
+
+function useLang() { return useContext(LangContext); }
+function useT() { const { lang } = useLang(); return key => (TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.es[key] ?? key); }
 
 // ═══ ICONS (SVG paths) ═══
 const icons = {
@@ -76,6 +84,16 @@ const css = `
   .sb-it:hover{background:var(--bg3);color:var(--tx)}.sb-it.ac{background:rgba(249,115,22,.08);color:var(--ora);font-weight:600}
   .sb-ft{padding:8px 10px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:6px}
   .sb-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--ora),var(--acc));display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+  .role-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+  .role-admin{background:rgba(220,38,38,.08);color:var(--red)}
+  .role-manager{background:rgba(124,58,237,.08);color:var(--pur)}
+  .role-sales_rep{background:rgba(5,150,105,.08);color:var(--grn)}
+  .role-support{background:rgba(37,99,235,.08);color:var(--acc)}
+  .role-finance{background:rgba(217,119,6,.08);color:var(--amb)}
+  .access-denied{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;color:var(--tx3)}
+  .access-denied .icon{font-size:52px}
+  .access-denied h2{font-size:18px;font-weight:700;color:var(--tx2)}
+  .access-denied p{font-size:12px;max-width:280px;text-align:center;line-height:1.6}
   .mn{flex:1;display:flex;flex-direction:column;overflow:hidden}
   .tp{height:50px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--bg2);flex-shrink:0}
   .tp h1{font-size:16px;font-weight:700}.tp-dt{font-size:11px;color:var(--tx3)}
@@ -122,7 +140,7 @@ const css = `
   .srch{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:0 10px}
   .srch input{background:transparent;border:none;color:var(--tx);font-size:11px;padding:6px 0;outline:none;width:160px;font-family:inherit}
   .mo{position:fixed;inset:0;background:rgba(0,0,0,.2);backdrop-filter:blur(3px);z-index:100;display:flex;align-items:center;justify-content:center}
-  .mdl{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;width:96%;max-width:650px;box-shadow:0 12px 40px rgba(0,0,0,.1)}
+  .mdl{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;width:96%;max-width:860px;box-shadow:0 12px 40px rgba(0,0,0,.1);max-height:90vh;overflow-y:auto}
   .mdl-h{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--bdr)}.mdl-h h3{font-size:13px;font-weight:700}
   .mdl-b{padding:8px 14px;display:flex;flex-direction:column;gap:4px}
   .mdl-f{padding:8px 14px;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:6px}
@@ -160,8 +178,9 @@ const css = `
 
 // ═══ DONUT PIE ═══
 function Pie({ data, size = 120, thick = 22 }) {
+  const t = useT();
   const total = data.reduce((a, d) => a + d.v, 0);
-  if (!total) return <div className="empty">Sin datos</div>;
+  if (!total) return <div className="empty">{t("no_data")}</div>;
   const r = size / 2 - 3, ri = r - thick, cx = size / 2, cy = size / 2;
   let ang = -Math.PI / 2;
   const arcs = data.filter(d => d.v > 0).map((d, i) => {
@@ -210,6 +229,8 @@ function Modal({ title, onClose, footer, children }) {
 
 // ═══ LOGIN ═══
 function Login({ onLogin }) {
+  const t = useT();
+  const { lang, setLang } = useLang();
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
@@ -218,18 +239,21 @@ function Login({ onLogin }) {
     setBusy(true); setErr("");
     api.get("crm_users", `&email=eq.${encodeURIComponent(email)}`).then(rows => {
       const u = rows?.find(r => r.password_hash === pass);
-      if (u) onLogin(u); else { setErr("Credenciales incorrectas"); setBusy(false); }
-    }).catch(() => { setErr("Error de conexión"); setBusy(false); });
+      if (u) onLogin(u); else { setErr(t("invalid_credentials")); setBusy(false); }
+    }).catch(() => { setErr(t("connection_error")); setBusy(false); });
   };
   return (
     <div className="lw"><div className="lc fin">
-      <h1>PLATINUM<span>CRM</span></h1><p>Enterprise · Gestión Comercial 360°</p>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+        <button onClick={() => setLang(lang === "es" ? "en" : "es")} style={{ background: "var(--bg3)", border: "1px solid var(--bdr)", borderRadius: 6, padding: "2px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600, color: "var(--tx2)", fontFamily: "inherit" }}>{lang === "es" ? "EN" : "ES"}</button>
+      </div>
+      <h1>PLATINUM<span>CRM</span></h1><p>Enterprise · {t("commercial_mgmt")}</p>
       {err && <div className="le">{err}</div>}
-      <Fld label="EMAIL" value={email} placeholder="usuario@platinumciber.com" onChange={v => { setEmail(v); setErr("") }} />
+      <Fld label={t("email_label")} value={email} placeholder="usuario@platinumciber.com" onChange={v => { setEmail(v); setErr("") }} />
       <div style={{ height: 6 }} />
-      <Fld label="CONTRASEÑA" type="password" value={pass} placeholder="••••••" onChange={v => { setPass(v); setErr("") }} />
+      <Fld label={t("password_label")} type="password" value={pass} placeholder="••••••" onChange={v => { setPass(v); setErr("") }} />
       <div style={{ height: 12 }} />
-      <button className="btn btn-p" style={{ width: "100%", justifyContent: "center", padding: 10, fontSize: 12 }} onClick={go} disabled={busy}>{busy ? "Conectando..." : "Iniciar Sesión"}</button>
+      <button className="btn btn-p" style={{ width: "100%", justifyContent: "center", padding: 10, fontSize: 12 }} onClick={go} disabled={busy}>{busy ? t("connecting") : t("login_btn")}</button>
     </div></div>
   );
 }
@@ -265,7 +289,7 @@ function Dashboard({ data }) {
   return (
     <div className="fin">
       <div className="grid4">
-        <div className="card"><div className="card-lb">Pipeline Activo</div><div className="card-vl" style={{ color: "var(--acc)" }}>{fm(totalPipe)}</div><div className="card-sub">{opp.length} oportunidades</div></div>
+        <div className="card"><div className="card-lb">Embudo Activo</div><div className="card-vl" style={{ color: "var(--acc)" }}>{fm(totalPipe)}</div><div className="card-sub">{opp.length} oportunidades</div></div>
         <div className="card"><div className="card-lb">Negocios Ganados</div><div className="card-vl" style={{ color: "var(--grn)" }}>{fm(totalWon)}</div><div className="card-sub">{won.length} contratos</div></div>
         <div className="card"><div className="card-lb">Balance Neto</div><div className="card-vl" style={{ color: tI - tE >= 0 ? "var(--grn)" : "var(--red)" }}>{fm(tI - tE)}</div><div className="card-sub">Ingresos − Egresos</div></div>
         <div className="card"><div className="card-lb">Leads Activos</div><div className="card-vl" style={{ color: "var(--ora)" }}>{leads.filter(l => !["converted", "lost"].includes(l.status)).length}</div><div className="card-sub">{leads.length} totales</div></div>
@@ -302,6 +326,7 @@ function Dashboard({ data }) {
 
 // ═══ GENERIC LIST MODULE ═══
 function ListModule({ title, table, columns, formFields, data, reload, emptyMsg, formatRow, newDefaults = {}, extraActions, filterOptions, topButtons }) {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(false);
   const [ed, setEd] = useState(null);
@@ -331,8 +356,8 @@ function ListModule({ title, table, columns, formFields, data, reload, emptyMsg,
   return (
     <div className="fin">
       <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <div className="srch"><Ic name="search" size={13} color="var(--tx3)" /><input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} /></div>
-        {filterOptions && <select className="ipt" style={{ width: "auto" }} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos</option>{filterOptions.values.map(o => <option key={o.v} value={o.v}>{o.t}</option>)}</select>}
+        <div className="srch"><Ic name="search" size={13} color="var(--tx3)" /><input placeholder={t("search")} value={search} onChange={e => setSearch(e.target.value)} /></div>
+        {filterOptions && <select className="ipt" style={{ width: "auto" }} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">{t("all")}</option>{filterOptions.values.map(o => <option key={o.v} value={o.v}>{o.t}</option>)}</select>}
         <div style={{ flex: 1 }} />
         {topButtons}
         <button className="btn btn-s btn-sm" style={{ fontSize: 9 }} onClick={() => {
@@ -340,31 +365,31 @@ function ListModule({ title, table, columns, formFields, data, reload, emptyMsg,
           const rows = filtered.map(item => columns.map(c => String(item[c.key] || "—")));
           exportCSV(`platinum_${table}_${new Date().toISOString().slice(0,10)}.csv`, headers, rows);
         }}>⬇ CSV</button>
-        <button className="btn btn-p" onClick={openNew}><Ic name="add" size={13} /> Nuevo</button>
+        <button className="btn btn-p" onClick={openNew}><Ic name="add" size={13} /> {t("new")}</button>
       </div>
       <div className="tbl">
         {filtered.length ? (
           <table>
-            <thead><tr>{columns.map(c => <th key={c.key}>{c.label}</th>)}<th>Acciones</th></tr></thead>
+            <thead><tr>{columns.map(c => <th key={c.key}>{c.label}</th>)}<th>{t("actions")}</th></tr></thead>
             <tbody>{filtered.map(item => (
               <tr key={item.id}>
                 {columns.map(c => <td key={c.key}>{formatRow ? formatRow(item, c.key) : (c.render ? c.render(item[c.key], item) : String(item[c.key] || "—"))}</td>)}
                 <td style={{ whiteSpace: "nowrap" }}>
                   {extraActions && extraActions(item)}
-                  <button className="btn btn-s btn-sm" onClick={() => openEdit(item)}>Editar</button>
+                  <button className="btn btn-s btn-sm" onClick={() => openEdit(item)}>{t("edit")}</button>
                 </td>
               </tr>
             ))}</tbody>
           </table>
-        ) : <div className="empty">{emptyMsg || "Sin registros"}</div>}
+        ) : <div className="empty">{emptyMsg || t("no_records")}</div>}
       </div>
       {modal && ed && (
-        <Modal title={ed.id ? `Editar ${title}` : `Nuevo ${title}`} onClose={() => setModal(false)} footer={<>
-          {ed.id && <button className="btn btn-d" style={{ marginRight: "auto" }} onClick={() => { remove(ed.id); setModal(false); }}>Eliminar</button>}
-          <button className="btn btn-s" onClick={() => setModal(false)}>Cancelar</button>
-          <button className="btn btn-p" onClick={save} disabled={saving}>{saving ? "Guardando..." : "Guardar"}</button>
+        <Modal title={ed.id ? `${t("edit")} ${title}` : `${t("new")} ${title}`} onClose={() => setModal(false)} footer={<>
+          {ed.id && <button className="btn btn-d" style={{ marginRight: "auto" }} onClick={() => { remove(ed.id); setModal(false); }}>{t("delete")}</button>}
+          <button className="btn btn-s" onClick={() => setModal(false)}>{t("cancel")}</button>
+          <button className="btn btn-p" onClick={save} disabled={saving}>{saving ? t("saving") : t("save")}</button>
         </>}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 4 }}>
             {formFields.map(f => (
               <div key={f.key} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
                 <Fld label={f.label} type={f.type || "text"} value={ed[f.key]} options={f.options} placeholder={f.placeholder}
@@ -611,13 +636,73 @@ function PipelineView({ data, reload }) {
 }
 
 // ═══ MAIN NAV ═══
+// ═══════════════════════════════════════════════════
+// ═══ RBAC — CONTROL DE ACCESO POR ROL ═══════════
+// ═══════════════════════════════════════════════════
+// Roles disponibles: admin | manager | sales_rep | support | finance
+// El campo "role" viene de crm_users.role
+// El campo "region" viene de crm_users.region
+
+const ROLE_LABELS = {
+  admin:     "Administrador",
+  manager:   "Gerente Regional",
+  sales_rep: "Vendedor",
+  support:   "Soporte",
+  finance:   "Finanzas",
+};
+
+// null = acceso total (admin)
+const ROLE_NAV = {
+  admin:     null,
+  manager:   ["dashboard","leads","accounts","contacts","opportunities","pipeline","tasks","calendar","activities","products","quotes","tickets","invoices","transactions","conversations","goals","forecasts","reports","orders","inbox","approvals","ai","surveys","knowledge","sla","automations","teams","territories"],
+  sales_rep: ["dashboard","leads","accounts","contacts","opportunities","pipeline","tasks","calendar","activities","quotes","conversations","orders","inbox"],
+  support:   ["dashboard","tickets","conversations","knowledge","inbox","sla","activities","tasks","surveys"],
+  finance:   ["dashboard","invoices","transactions","forecasts","quotes","reports","approvals"],
+};
+
+function canAccess(role, viewId) {
+  const allowed = ROLE_NAV[role];
+  if (!allowed) return true;
+  return allowed.includes(viewId);
+}
+
+// Filtra filas según rol: admin/finance ven todo,
+// manager filtra por región, sales_rep/support por owner
+function filterByRole(rows, role, userId, region) {
+  if (!Array.isArray(rows)) return [];
+  if (role === "admin" || role === "finance") return rows;
+  if (role === "manager") {
+    return rows.filter(r =>
+      !r.region || r.region === region ||
+      r.owner_id === userId || r.assigned_to === userId ||
+      r.created_by === userId || r.author_id === userId || r.requested_by === userId
+    );
+  }
+  // sales_rep / support
+  return rows.filter(r =>
+    r.owner_id === userId || r.assigned_to === userId ||
+    r.created_by === userId || r.author_id === userId || r.requested_by === userId
+  );
+}
+
+// Acceso denegado
+function AccessDenied() {
+  return (
+    <div className="access-denied">
+      <div className="icon">🔒</div>
+      <h2>Acceso restringido</h2>
+      <p>No tienes permisos para ver esta sección. Contactá a tu administrador si necesitás acceso.</p>
+    </div>
+  );
+}
+
 const NAV = [
-  { id: "dashboard", label: "Dashboard", icon: "dashboard", group: "principal" },
+  { id: "dashboard", label: "Panel", icon: "dashboard", group: "principal" },
   { id: "leads", label: "Leads", icon: "leads", group: "comercial" },
   { id: "accounts", label: "Cuentas", icon: "accounts", group: "comercial" },
   { id: "contacts", label: "Contactos", icon: "contacts", group: "comercial" },
   { id: "opportunities", label: "Oportunidades", icon: "opportunities", group: "comercial" },
-  { id: "pipeline", label: "Pipeline", icon: "pipeline", group: "comercial" },
+  { id: "pipeline", label: "Embudo", icon: "pipeline", group: "comercial" },
   { id: "tasks", label: "Tareas", icon: "tasks", group: "operaciones" },
   { id: "calendar", label: "Calendario", icon: "calendar", group: "operaciones" },
   { id: "activities", label: "Actividades", icon: "activities", group: "operaciones" },
@@ -628,7 +713,7 @@ const NAV = [
   { id: "transactions", label: "Transacciones", icon: "invoices", group: "finanzas" },
   { id: "conversations", label: "Conversaciones", icon: "conversations", group: "comunicación" },
   { id: "goals", label: "Metas", icon: "goals", group: "analytics" },
-  { id: "forecasts", label: "Forecasts", icon: "goals", group: "analytics" },
+  { id: "forecasts", label: "Pronósticos", icon: "goals", group: "analytics" },
   { id: "teams", label: "Equipos", icon: "contacts", group: "admin" },
   { id: "territories", label: "Territorios", icon: "accounts", group: "admin" },
   { id: "automations", label: "Automatizaciones", icon: "activities", group: "admin" },
@@ -638,7 +723,7 @@ const NAV = [
   { id: "reports", label: "Reportes", icon: "goals", group: "inteligencia" },
   { id: "orders", label: "Pedidos", icon: "quotes", group: "comercial" },
   { id: "sla", label: "SLA", icon: "tickets", group: "soporte" },
-  { id: "inbox", label: "Inbox", icon: "conversations", group: "comunicación" },
+  { id: "inbox", label: "Bandeja", icon: "conversations", group: "comunicación" },
   { id: "approvals", label: "Aprobaciones", icon: "tasks", group: "admin" },
 ];
 
@@ -859,41 +944,78 @@ function App() {
   const [selectedContact, setSelectedContact] = useState(null);
   const [selectedOpp, setSelectedOpp] = useState(null);
   const [showNotif, setShowNotif] = useState(false);
+  const [lang, setLangState] = useState(() => localStorage.getItem("crm_lang") || "es");
+  const setLang = (l) => { setLangState(l); localStorage.setItem("crm_lang", l); };
+  const t = (k) => (TRANSLATIONS[lang] || TRANSLATIONS.es)[k] || k;
   const [data, setData] = useState({ leads: [], contacts: [], accounts: [], opportunities: [], stages: [], tasks: [], products: [], quotes: [], tickets: [], invoices: [], transactions: [], events: [], goals: [], forecasts: [], conversations: [], activities: [], kb_articles: [], teams: [], territories: [], automations: [], surveys: [], orders: [], sla_policies: [], escalations: [], approvals: [] });
 
   const loadAll = useCallback(() => {
+    if (!user) return;
     setLoading(true);
+    const role   = user.role   || "sales_rep";
+    const uid    = user.id;
+    const region = user.region || "";
+    const f = (rows) => filterByRole(rows || [], role, uid, region);
+    // Tablas globales (sin filtro por owner): stages, products, sla_policies, territories, teams, automations
     Promise.all([
-      api.get("crm_leads", "&order=created_at.desc"),
-      api.get("crm_contacts", "&order=created_at.desc"),
-      api.get("crm_accounts", "&order=created_at.desc"),
-      api.get("crm_opportunities", "&order=created_at.desc"),
+      api.get("crm_leads",          "&order=created_at.desc"),
+      api.get("crm_contacts",        "&order=created_at.desc"),
+      api.get("crm_accounts",        "&order=created_at.desc"),
+      api.get("crm_opportunities",   "&order=created_at.desc"),
       api.get("crm_pipeline_stages", "&order=order_num.asc"),
-      api.get("crm_tasks", "&order=created_at.desc"),
-      api.get("crm_products", "&order=name.asc"),
-      api.get("crm_quotes", "&order=created_at.desc"),
-      api.get("crm_tickets", "&order=created_at.desc"),
-      api.get("crm_invoices", "&order=created_at.desc"),
-      api.get("crm_transactions", "&order=created_at.desc"),
-      api.get("crm_events", "&order=start_at.desc"),
-      api.get("crm_goals", "&order=created_at.desc"),
-      api.get("crm_forecasts", "&order=created_at.desc"),
-      api.get("crm_conversations", "&order=created_at.desc"),
-      api.get("crm_activities", "&order=created_at.desc"),
-      api.get("crm_kb_articles", "&order=created_at.desc"),
-      api.get("crm_teams", "&order=created_at.desc"),
-      api.get("crm_territories", "&order=created_at.desc"),
-      api.get("crm_automations", "&order=created_at.desc"),
-      api.get("crm_surveys", "&order=created_at.desc"),
-      api.get("crm_orders", "&order=created_at.desc"),
-      api.get("crm_sla_policies", "&order=priority.asc"),
-      api.get("crm_escalations", "&order=created_at.desc"),
-      api.get("crm_approvals", "&order=created_at.desc"),
+      api.get("crm_tasks",           "&order=created_at.desc"),
+      api.get("crm_products",        "&order=name.asc"),
+      api.get("crm_quotes",          "&order=created_at.desc"),
+      api.get("crm_tickets",         "&order=created_at.desc"),
+      api.get("crm_invoices",        "&order=created_at.desc"),
+      api.get("crm_transactions",    "&order=created_at.desc"),
+      api.get("crm_events",          "&order=start_at.desc"),
+      api.get("crm_goals",           "&order=created_at.desc"),
+      api.get("crm_forecasts",       "&order=created_at.desc"),
+      api.get("crm_conversations",   "&order=created_at.desc"),
+      api.get("crm_activities",      "&order=created_at.desc"),
+      api.get("crm_kb_articles",     "&order=created_at.desc"),
+      api.get("crm_teams",           "&order=created_at.desc"),
+      api.get("crm_territories",     "&order=created_at.desc"),
+      api.get("crm_automations",     "&order=created_at.desc"),
+      api.get("crm_surveys",         "&order=created_at.desc"),
+      api.get("crm_orders",          "&order=created_at.desc"),
+      api.get("crm_sla_policies",    "&order=priority.asc"),
+      api.get("crm_escalations",     "&order=created_at.desc"),
+      api.get("crm_approvals",       "&order=created_at.desc"),
     ]).then(([leads, contacts, accounts, opportunities, stages, tasks, products, quotes, tickets, invoices, transactions, events, goals, forecasts, conversations, activities, kb_articles, teams, territories, automations, surveys, orders, sla_policies, escalations, approvals]) => {
-      setData({ leads: leads||[], contacts: contacts||[], accounts: accounts||[], opportunities: opportunities||[], stages: stages||[], tasks: tasks||[], products: products||[], quotes: quotes||[], tickets: tickets||[], invoices: invoices||[], transactions: transactions||[], events: events||[], goals: goals||[], forecasts: forecasts||[], conversations: conversations||[], activities: activities||[], kb_articles: kb_articles||[], teams: teams||[], territories: territories||[], automations: automations||[], surveys: surveys||[], orders: orders||[], sla_policies: sla_policies||[], escalations: escalations||[], approvals: approvals||[] });
+      setData({
+        // Datos filtrados por rol
+        leads:         f(leads),
+        contacts:      f(contacts),
+        accounts:      f(accounts),
+        opportunities: f(opportunities),
+        tasks:         f(tasks),
+        quotes:        f(quotes),
+        tickets:       f(tickets),
+        invoices:      f(invoices),
+        transactions:  f(transactions),
+        events:        f(events),
+        goals:         f(goals),
+        forecasts:     f(forecasts),
+        conversations: f(conversations),
+        activities:    f(activities),
+        orders:        f(orders),
+        escalations:   f(escalations),
+        approvals:     f(approvals),
+        surveys:       f(surveys),
+        // Datos globales (sin filtro de rol — todos ven igual)
+        stages:        stages      || [],
+        products:      products    || [],
+        kb_articles:   kb_articles || [],
+        teams:         teams       || [],
+        territories:   territories || [],
+        automations:   automations || [],
+        sla_policies:  sla_policies|| [],
+      });
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   useEffect(() => { if (user) loadAll(); }, [user, loadAll]);
 
@@ -1165,9 +1287,12 @@ function App() {
   });
 
   const pg = NAV.find(n => n.id === view)?.label || "Dashboard";
+  // Guarda RBAC: si el rol no tiene permiso para la vista, muestra acceso denegado
+  const effectiveView = canAccess(user.role, view) ? view : view;
   let content;
 
-  if (loading) content = <div className="empty" style={{ padding: 60 }}>Cargando datos...</div>;
+  if (!canAccess(user.role, view)) content = <AccessDenied />;
+  else if (loading) content = <div className="empty" style={{ padding: 60 }}>Cargando datos...</div>;
   else if (view === "dashboard") content = <Dashboard data={data} />;
   else if (view === "pipeline") content = <PipelineView data={data} reload={loadAll} />;
   else if (view === "leads") content = <ListModule title="Lead" table="crm_leads" data={data.leads} reload={loadAll}
@@ -1182,13 +1307,14 @@ function App() {
       { key: "contact_name", label: "Contacto" },
       { key: "source", label: "Fuente" },
       { key: "estimated_value", label: "Valor", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fm(v)}</span> },
-      { key: "score", label: "Score", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: v >= 70 ? "var(--grn)" : v >= 40 ? "var(--ora)" : "var(--tx3)" }}>{v || 0}</span> },
+      { key: "score", label: "Puntaje", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: v >= 70 ? "var(--grn)" : v >= 40 ? "var(--ora)" : "var(--tx3)" }}>{v || 0}</span> },
       { key: "status", label: "Estado", render: v => <span className={`bd bd-${v}`}>{v}</span> },
     ]}
     formFields={[
       { key: "company", label: "Empresa" }, { key: "contact_name", label: "Contacto" }, { key: "email", label: "Email", type: "email" },
-      { key: "phone", label: "Teléfono" }, { key: "estimated_value", label: "Valor", type: "number" }, { key: "score", label: "Score", type: "number" },
+      { key: "phone", label: "Teléfono" }, { key: "estimated_value", label: "Valor", type: "number" }, { key: "score", label: "Puntaje", type: "number" },
       { key: "source", label: "Fuente", type: "select", options: LEAD_SOURCES }, { key: "status", label: "Estado", type: "select", options: LEAD_STATUS }, { key: "industry", label: "Industria" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "new", score: 0, estimated_value: 0, owner_id: user.id }}
   />;
@@ -1205,13 +1331,14 @@ function App() {
         )}
         columns={[
           { key: "name", label: "Nombre" }, { key: "industry", label: "Industria" }, { key: "type", label: "Tipo", render: v => <span className={`bd bd-${v === "customer" ? "won" : "open"}`}>{v}</span> },
-          { key: "health_score", label: "Health", render: v => <span style={{ fontFamily: "'JetBrains Mono'", fontWeight: 700, color: v >= 70 ? "var(--grn)" : v >= 40 ? "var(--ora)" : "var(--red)" }}>{v}%</span> },
+          { key: "health_score", label: "Salud", render: v => <span style={{ fontFamily: "'JetBrains Mono'", fontWeight: 700, color: v >= 70 ? "var(--grn)" : v >= 40 ? "var(--ora)" : "var(--red)" }}>{v}%</span> },
           { key: "country", label: "País" },
         ]}
         formFields={[
           { key: "name", label: "Nombre *" }, { key: "industry", label: "Industria" }, { key: "type", label: "Tipo", type: "select", options: ACC_TYPES },
           { key: "phone", label: "Teléfono" }, { key: "email", label: "Email" }, { key: "country", label: "País" },
-          { key: "size", label: "Tamaño", type: "select", options: ACC_SIZES }, { key: "health_score", label: "Health Score", type: "number" }, { key: "annual_revenue", label: "Revenue", type: "number" },
+          { key: "size", label: "Tamaño", type: "select", options: ACC_SIZES }, { key: "health_score", label: "Salud", type: "number" }, { key: "annual_revenue", label: "Ingresos", type: "number" },
+      { key: "comments", label: "Comentarios" },
         ]}
         newDefaults={{ type: "prospect", health_score: 50, owner_id: user.id }}
       />;
@@ -1236,6 +1363,7 @@ function App() {
           { key: "first_name", label: "Nombre *" }, { key: "last_name", label: "Apellido" }, { key: "email", label: "Email", type: "email" },
           { key: "phone", label: "Teléfono" }, { key: "job_title", label: "Cargo" }, { key: "department", label: "Depto." },
           { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "linkedin", label: "LinkedIn" }, { key: "mobile", label: "Móvil" },
+      { key: "comments", label: "Comentarios" },
         ]}
         newDefaults={{ owner_id: user.id }}
       />;
@@ -1252,6 +1380,7 @@ function App() {
     formFields={[
       { key: "title", label: "Título *" }, { key: "type", label: "Tipo", type: "select", options: TASK_TYPES }, { key: "due_date", label: "Fecha", type: "date" },
       { key: "priority", label: "Prioridad", type: "select", options: PRIORITIES }, { key: "status", label: "Estado", type: "select", options: TASK_STATUS }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "pending", priority: "medium", type: "task", owner_id: user.id }}
   />;
@@ -1262,9 +1391,10 @@ function App() {
       { key: "unit_price", label: "Precio", render: v => <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{fm(v)}</span> },
     ]}
     formFields={[
-      { key: "name", label: "Nombre *" }, { key: "sku", label: "SKU" }, { key: "type", label: "Tipo", type: "select", options: PROD_TYPES },
+      { key: "name", label: "Nombre *" }, { key: "sku", label: "Código" }, { key: "type", label: "Tipo", type: "select", options: PROD_TYPES },
       { key: "category", label: "Categoría" }, { key: "unit_price", label: "Precio", type: "number" }, { key: "cost", label: "Costo", type: "number" },
       { key: "description", label: "Descripción" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ type: "service", unit_price: 0, cost: 0, active: true }}
   />;
@@ -1287,6 +1417,7 @@ function App() {
       { key: "quote_number", label: "N° *" }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "status", label: "Estado", type: "select", options: QUOTE_STATUS },
       { key: "subtotal", label: "Subtotal", type: "number" }, { key: "tax", label: "Impuesto", type: "number" }, { key: "total", label: "Total", type: "number" },
       { key: "discount_pct", label: "Dto %", type: "number" }, { key: "valid_until", label: "Válida hasta", type: "date" }, { key: "opportunity_id", label: "Oportunidad", type: "select", options: oppOpts },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "draft", quote_number: `COT-${uid()}`, owner_id: user.id }}
   />;
@@ -1308,6 +1439,7 @@ function App() {
       { key: "contact_id", label: "Contacto", type: "select", options: ctcOpts },
       { key: "category", label: "Categoría" },
       { key: "description", label: "Descripción" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "open", priority: "medium", channel: "email", ticket_number: `TK-${uid()}`, assigned_to: user.id }}
   />;
@@ -1323,6 +1455,7 @@ function App() {
       { key: "invoice_number", label: "N° *" }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "status", label: "Estado", type: "select", options: INV_STATUS },
       { key: "subtotal", label: "Subtotal", type: "number" }, { key: "tax", label: "Impuesto", type: "number" }, { key: "total", label: "Total", type: "number" },
       { key: "paid_amount", label: "Pagado", type: "number" }, { key: "due_date", label: "Vencimiento", type: "date" }, { key: "notes", label: "Notas" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "draft", invoice_number: `FAC-${uid()}` }}
   />;
@@ -1348,6 +1481,7 @@ function App() {
           { key: "name", label: "Nombre *" }, { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "stage_id", label: "Etapa", type: "select", options: stgOpts },
           { key: "amount", label: "Monto", type: "number" }, { key: "probability", label: "Prob. %", type: "number" }, { key: "expected_close_date", label: "Cierre Est.", type: "date" },
           { key: "type", label: "Tipo", type: "select", options: OPP_TYPES }, { key: "priority", label: "Prioridad", type: "select", options: PRIORITIES }, { key: "source", label: "Fuente" },
+      { key: "comments", label: "Comentarios" },
         ]}
         newDefaults={{ type: "new_business", probability: 10, amount: 0, stage_id: data.stages[0]?.id, owner_id: user.id }}
       />;
@@ -1418,22 +1552,24 @@ function App() {
       { key: "outcome", label: "Resultado" }, { key: "duration_min", label: "Duración (min)", type: "number" },
       { key: "is_completed", label: "Completada", type: "select", options: [{ v: false, t: "No" }, { v: true, t: "Sí" }] },
       { key: "description", label: "Descripción" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ type: "call", is_completed: false, owner_id: user.id }}
   />;
   else if (view === "conversations") content = <ListModule title="Conversación" table="crm_conversations" data={data.conversations} reload={loadAll}
     columns={[
       { key: "channel", label: "Canal", render: v => <span className={`bd bd-${v === "email" ? "sent" : v === "whatsapp" ? "qualified" : "open"}`}>{v}</span> },
-      { key: "direction", label: "Dir.", render: v => v === "inbound" ? "↓ Entrante" : "↑ Saliente" },
+      { key: "direction", label: "Dirección", render: v => v === "inbound" ? "↓ Entrante" : "↑ Saliente" },
       { key: "subject", label: "Asunto" },
       { key: "contact_id", label: "Contacto", render: v => { const c = data.contacts.find(ct => ct.id === v); return c ? `${c.first_name} ${c.last_name || ""}` : "—"; } },
       { key: "account_id", label: "Cuenta", render: v => data.accounts.find(a => a.id === v)?.name || "—" },
       { key: "created_at", label: "Fecha", render: v => fd(v) },
     ]}
     formFields={[
-      { key: "channel", label: "Canal *", type: "select", options: CONV_CHANNELS }, { key: "direction", label: "Dir.", type: "select", options: CONV_DIR }, { key: "subject", label: "Asunto" },
+      { key: "channel", label: "Canal *", type: "select", options: CONV_CHANNELS }, { key: "direction", label: "Dirección", type: "select", options: CONV_DIR }, { key: "subject", label: "Asunto" },
       { key: "from_address", label: "De" }, { key: "to_address", label: "Para" }, { key: "contact_id", label: "Contacto", type: "select", options: ctcOpts },
       { key: "account_id", label: "Cuenta", type: "select", options: accOpts }, { key: "duration_sec", label: "Duración", type: "number" }, { key: "body", label: "Mensaje" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ channel: "email", direction: "outbound", is_read: false, owner_id: user.id }}
   />;
@@ -1452,6 +1588,7 @@ function App() {
       { key: "period", label: "Período", type: "select", options: GOAL_PERIODS },
       { key: "start_date", label: "Inicio", type: "date" }, { key: "end_date", label: "Fin", type: "date" },
       { key: "status", label: "Estado", type: "select", options: GOAL_STATUS },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ type: "revenue", period: "monthly", status: "active", target_value: 0, current_value: 0, owner_id: user.id }}
   />;
@@ -1467,6 +1604,7 @@ function App() {
       { key: "title", label: "Título *" }, { key: "category", label: "Categoría" },
       { key: "status", label: "Estado", type: "select", options: KB_STATUS },
       { key: "content", label: "Contenido", type: "textarea" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "draft", views_count: 0, helpful_count: 0, author_id: user.id }}
   />;
@@ -1484,6 +1622,7 @@ function App() {
       { key: "date", label: "Fecha", type: "date" }, { key: "status", label: "Estado", type: "select", options: TX_STATUS },
       { key: "account_id", label: "Cuenta", type: "select", options: accOpts },
       { key: "description", label: "Descripción *" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ type: "income", status: "pending", amount: 0, date: ds(new Date()) }}
   />;
@@ -1502,6 +1641,7 @@ function App() {
       { key: "best_case", label: "Mejor Caso", type: "number" }, { key: "most_likely", label: "Probable", type: "number" }, { key: "worst_case", label: "Peor Caso", type: "number" },
       { key: "committed", label: "Comprometido", type: "number" }, { key: "closed", label: "Cerrado", type: "number" },
       { key: "notes", label: "Notas" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ best_case: 0, most_likely: 0, worst_case: 0, committed: 0, closed: 0, owner_id: user.id }}
   />;
@@ -1509,11 +1649,12 @@ function App() {
     columns={[
       { key: "name", label: "Equipo" },
       { key: "description", label: "Descripción" },
-      { key: "manager_id", label: "Manager", render: v => { const u = data.teams.length ? null : null; return "—"; } },
+      { key: "manager_id", label: "Gerente", render: v => { const u = data.teams.length ? null : null; return "—"; } },
     ]}
     formFields={[
       { key: "name", label: "Nombre *" },
       { key: "description", label: "Descripción" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{}}
   />;
@@ -1526,6 +1667,7 @@ function App() {
     formFields={[
       { key: "name", label: "Nombre *" }, { key: "region", label: "Región" }, { key: "country", label: "País" },
       { key: "description", label: "Descripción" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{}}
   />;
@@ -1539,15 +1681,16 @@ function App() {
     </div>}
     columns={[
       { key: "name", label: "Nombre" },
-      { key: "trigger_type", label: "Trigger", render: v => <span className={`bd bd-${v?.includes("overdue") ? "critical" : "open"}`}>{v}</span> },
+      { key: "trigger_type", label: "Disparador", render: v => <span className={`bd bd-${v?.includes("overdue") ? "critical" : "open"}`}>{v}</span> },
       { key: "is_active", label: "Activa", render: v => <span className={`bd bd-${v ? "won" : "cancelled"}`}>{v ? "Sí" : "No"}</span> },
       { key: "runs_count", label: "Ejecuciones" },
       { key: "last_run_at", label: "Última Ejecución", render: v => fd(v) },
     ]}
     formFields={[
-      { key: "name", label: "Nombre *" }, { key: "trigger_type", label: "Trigger", type: "select", options: AUTOMATION_TRIGGERS },
+      { key: "name", label: "Nombre *" }, { key: "trigger_type", label: "Disparador", type: "select", options: AUTOMATION_TRIGGERS },
       { key: "is_active", label: "Activa", type: "select", options: [{ v: true, t: "Sí" }, { v: false, t: "No" }] },
       { key: "description", label: "Descripción" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ trigger_type: "lead_created", is_active: true, runs_count: 0, created_by: user.id }}
   />;
@@ -1566,6 +1709,7 @@ function App() {
       { key: "ticket_id", label: "Ticket", type: "select", options: [{ v: "", t: "— Ninguno —" }, ...data.tickets.map(t => ({ v: t.id, t: t.ticket_number + " - " + t.subject }))] },
       { key: "responded_at", label: "Fecha Respuesta", type: "date" },
       { key: "comment", label: "Comentario" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ type: "csat", score: 5, responded_at: ds(new Date()) }}
   />;
@@ -1583,6 +1727,7 @@ function App() {
       { key: "subtotal", label: "Subtotal", type: "number" }, { key: "tax", label: "Impuesto", type: "number" }, { key: "total", label: "Total", type: "number" },
       { key: "quote_id", label: "Cotización", type: "select", options: [{ v: "", t: "— Ninguna —" }, ...data.quotes.map(q => ({ v: q.id, t: q.quote_number }))] },
       { key: "shipping_address", label: "Dirección Envío" }, { key: "notes", label: "Notas" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "pending", order_number: `ORD-${uid()}`, owner_id: user.id }}
   />;
@@ -1600,6 +1745,7 @@ function App() {
       { key: "first_response_hours", label: "1ra Resp. hrs", type: "number" },
       { key: "resolution_hours", label: "Resolución hrs", type: "number" }, { key: "escalation_hours", label: "Escalación hrs", type: "number" },
       { key: "is_active", label: "Activa", type: "select", options: [{ v: true, t: "Sí" }, { v: false, t: "No" }] },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ first_response_hours: 24, resolution_hours: 72, escalation_hours: 48, is_active: true }}
   />;
@@ -1628,7 +1774,7 @@ function App() {
                 <td style={{ fontSize: 10 }}>{fd(m._date)}</td>
               </tr>;
             })}
-          </tbody></table> : <div className="empty">Bandeja vacía. Las conversaciones y actividades tipo email/llamada/whatsapp aparecerán aquí.</div>}
+          </tbody></table> : <div className="empty">{t("Bandeja vacía")}</div>}
         </div>
       </div>
     );
@@ -1645,24 +1791,27 @@ function App() {
       { key: "status", label: "Estado", type: "select", options: APPROVAL_STATUS },
       { key: "reason", label: "Motivo" }, { key: "response_note", label: "Nota Respuesta" },
       { key: "responded_at", label: "Fecha Resp.", type: "date" },
+      { key: "comments", label: "Comentarios" },
     ]}
     newDefaults={{ status: "pending", requested_by: user.id }}
   />;
 
   return (
-    <>
+    <LangContext.Provider value={{ lang, setLang, t }}>
       <style>{css}</style>
       <div className="crm">
         <aside className="sb">
           <div className="sb-hd">PLATINUM<span>CRM</span></div>
           <nav className="sb-nv">
             {(() => {
-              const groups = { principal: "Principal", comercial: "Comercial", operaciones: "Operaciones", soporte: "Soporte", finanzas: "Finanzas", comunicación: "Comunicación", analytics: "Analytics", inteligencia: "Inteligencia", admin: "Administración" };
+              const groups = { principal: t("Principal"), comercial: t("Comercial"), operaciones: t("Operaciones"), soporte: t("Soporte"), finanzas: t("Finanzas"), comunicación: t("Comunicación"), analytics: t("Analytics"), inteligencia: t("Inteligencia"), admin: t("Administración") };
               let lastGroup = "";
-              return NAV.map(n => {
+              // Filtra ítems de nav según rol del usuario
+              const visibleNav = NAV.filter(n => canAccess(user.role, n.id));
+              return visibleNav.map(n => {
                 const items = [];
                 if (n.group !== lastGroup) { lastGroup = n.group; items.push(<div key={"g-" + n.group} style={{ fontSize: 7, fontWeight: 800, color: "var(--tx3)", textTransform: "uppercase", letterSpacing: 1.2, padding: "4px 10px 0px", marginTop: 1 }}>{groups[n.group] || n.group}</div>); }
-                items.push(<button key={n.id} className={`sb-it${view === n.id ? " ac" : ""}`} onClick={() => { setView(n.id); setSelectedAccount(null); setSelectedContact(null); setSelectedOpp(null); setShowNotif(false); }}><Ic name={n.icon} size={14} /><span>{n.label}</span></button>);
+                items.push(<button key={n.id} className={`sb-it${view === n.id ? " ac" : ""}`} onClick={() => { if (canAccess(user.role, n.id)) { setView(n.id); setSelectedAccount(null); setSelectedContact(null); setSelectedOpp(null); setShowNotif(false); } }}><Ic name={n.icon} size={14} /><span>{t(n.label)}</span></button>);
                 return items;
               }).flat();
             })()}
@@ -1671,38 +1820,59 @@ function App() {
             <div className="sb-av">{user.avatar}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>
-              <div style={{ fontSize: 9, color: "var(--tx3)" }}>{user.role} · {user.region}</div>
+              <div style={{ fontSize: 9, color: "var(--tx3)" }}>{ROLE_LABELS[user.role] || user.role} · {user.region}</div>
             </div>
-            <button onClick={() => setUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--tx3)" }} title="Salir"><Ic name="logout" size={15} /></button>
+            <button onClick={() => setUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--tx3)" }} title={t("Cerrar sesión")}><Ic name="logout" size={15} /></button>
           </div>
         </aside>
         <div className="mn">
           <div className="tp">
             <h1>{pg}</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span className={`role-badge role-${user.role}`}>
+                {ROLE_LABELS[user.role] || user.role}
+              </span>
+              <button
+                onClick={() => setLang(lang === "es" ? "en" : "es")}
+                style={{ 
+                  background: "var(--bg3)", 
+                  border: "1px solid var(--bdr)", 
+                  color: "var(--tx1)", 
+                  fontSize: 10, 
+                  fontWeight: 700, 
+                  padding: "4px 8px", 
+                  borderRadius: 6, 
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4
+                }}
+              >
+                <span>{lang === "es" ? "🇺🇸 EN" : "🇪🇸 ES"}</span>
+              </button>
               <div style={{ position: "relative" }}>
-                <button onClick={() => setShowNotif(!showNotif)} style={{ background: "none", border: "none", cursor: "pointer", color: notifications.length > 0 ? "var(--ora)" : "var(--tx3)", fontSize: 18 }} title={`${notifications.length} notificaciones`}>
+                <button onClick={() => setShowNotif(!showNotif)} style={{ background: "none", border: "none", cursor: "pointer", color: notifications.length > 0 ? "var(--ora)" : "var(--tx3)", fontSize: 18 }} title={`${notifications.length} ${t("Notificaciones").toLowerCase()}`}>
                   🔔
                   {notifications.length > 0 && <span style={{ position: "absolute", top: -4, right: -6, background: "var(--red)", color: "#fff", fontSize: 8, fontWeight: 700, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{notifications.length}</span>}
                 </button>
                 {showNotif && (
                   <div style={{ position: "absolute", top: 30, right: 0, width: 300, background: "var(--bg2)", border: "1px solid var(--bdr)", borderRadius: 10, boxShadow: "0 8px 30px rgba(0,0,0,.12)", zIndex: 200, maxHeight: 300, overflowY: "auto" }}>
-                    <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--bdr)", fontSize: 11, fontWeight: 700 }}>Notificaciones ({notifications.length})</div>
+                    <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--bdr)", fontSize: 11, fontWeight: 700 }}>{t("Notificaciones")} ({notifications.length})</div>
                     {notifications.length > 0 ? notifications.map(n => (
                       <div key={n.id} style={{ padding: "6px 12px", borderBottom: "1px solid var(--bdr)", fontSize: 10, color: n.type === "error" ? "var(--red)" : "var(--ora)" }}>
-                        {n.type === "error" ? "🔴" : "🟠"} {n.msg}
+                        {n.type === "error" ? "🔴" : "🟠"} {t(n.msg) || n.msg}
                       </div>
-                    )) : <div style={{ padding: 16, textAlign: "center", fontSize: 11, color: "var(--tx3)" }}>Sin notificaciones</div>}
+                    )) : <div style={{ padding: 16, textAlign: "center", fontSize: 11, color: "var(--tx3)" }}>{t("Sin notificaciones")}</div>}
                   </div>
                 )}
               </div>
-              <div className="tp-dt">{new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
+              <div className="tp-dt">{new Date().toLocaleDateString(lang === "es" ? "es-AR" : "en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
             </div>
           </div>
           <div className="pg">{content}</div>
         </div>
       </div>
-    </>
+    </LangContext.Provider>
   );
 }
 
