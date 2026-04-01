@@ -1196,7 +1196,7 @@ function App() {
 
   useEffect(() => { if (user) loadAll(); }, [user, loadAll]);
 
-  if (!user) return <><style>{css}</style><Login onLogin={setUser} /></>;
+  if (!user) return <><style>{css}</style><Login onLogin={u => { localStorage.setItem("crm_user", JSON.stringify(u)); setUser(u); }} /></>;
 
   const accOpts = [{ v: "", t: "— Ninguna —" }, ...data.accounts.map(a => ({ v: a.id, t: a.name }))];
   const ctcOpts = [{ v: "", t: "— Ninguno —" }, ...data.contacts.map(c => ({ v: c.id, t: `${c.first_name} ${c.last_name || ""}` }))];
@@ -1993,6 +1993,12 @@ function App() {
               }).flat();
             })()}
           </nav>
+          <a href="erp.html" style={{display:"flex",alignItems:"center",gap:8,margin:"6px 8px",padding:"8px 12px",borderRadius:8,background:"linear-gradient(135deg,#0c4a6e,#0891b2)",color:"#fff",textDecoration:"none",fontSize:11,fontWeight:700,letterSpacing:.3,boxShadow:"0 2px 8px rgba(8,145,178,.3)",transition:"all .15s"}}
+            onMouseOver={e=>e.currentTarget.style.filter="brightness(1.1)"} onMouseOut={e=>e.currentTarget.style.filter=""}>
+            <span style={{fontSize:16}}>⚡</span>
+            <span>ERP NORIVA</span>
+            <span style={{marginLeft:"auto",fontSize:9,opacity:.7,fontWeight:500}}>→</span>
+          </a>
           <div className="sb-ft">
             <div className="sb-av">{user.avatar}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
