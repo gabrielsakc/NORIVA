@@ -206,11 +206,11 @@ function Pie({ data, size = 120, thick = 22 }) {
 }
 
 // ═══ FIELD INPUT ═══
-function Fld({ label, value, onChange, type = "text", options, placeholder }) {
+function Fld({ label, value, onChange, type = "text", options, placeholder, onKeyDown }) {
   let el;
   if (type === "select") el = <select className="ipt" value={value || ""} onChange={e => onChange(e.target.value)}>{options.map(o => typeof o === "string" ? <option key={o} value={o}>{o}</option> : <option key={o.v} value={o.v}>{o.t}</option>)}</select>;
   else if (type === "textarea") el = <textarea className="ipt" style={{ minHeight: 26, height: 26, resize: "none" }} value={value || ""} placeholder={placeholder} onChange={e => onChange(e.target.value)} />;
-  else el = <input className="ipt" type={type} value={value == null ? "" : value} placeholder={placeholder} onChange={e => onChange(type === "number" ? Number(e.target.value) : e.target.value)} />;
+  else el = <input className="ipt" type={type} value={value == null ? "" : value} placeholder={placeholder} onChange={e => onChange(type === "number" ? Number(e.target.value) : e.target.value)} onKeyDown={onKeyDown} />;
   return <div className="ig"><label>{label}</label>{el}</div>;
 }
 
@@ -228,13 +228,24 @@ function Modal({ title, onClose, footer, children }) {
 }
 
 // ═══ LOGIN ═══
+const ROLE_PROFILES = [
+  { role: "admin",     icon: "🛡️", label: "Administrador",    desc: "Acceso total al sistema",              color: "#dc2626", bg: "rgba(220,38,38,.06)"    },
+  { role: "manager",   icon: "📊", label: "Gerente Regional",  desc: "Gestión de equipo y región",           color: "#7c3aed", bg: "rgba(124,58,237,.06)"   },
+  { role: "sales_rep", icon: "🚀", label: "Vendedor",          desc: "Pipeline, leads y oportunidades",      color: "#059669", bg: "rgba(5,150,105,.06)"    },
+  { role: "support",   icon: "🎧", label: "Soporte",           desc: "Tickets, conversaciones y KB",         color: "#2563eb", bg: "rgba(37,99,235,.06)"    },
+  { role: "finance",   icon: "💰", label: "Finanzas",          desc: "Facturas, transacciones y reportes",   color: "#d97706", bg: "rgba(217,119,6,.06)"    },
+];
+
 function Login({ onLogin }) {
   const t = useT();
   const { lang, setLang } = useLang();
+  const [step, setStep] = useState(1);           // 1 = elegir perfil, 2 = credenciales
+  const [selectedProfile, setSelectedProfile] = useState(null);
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+
   const go = () => {
     setBusy(true); setErr("");
     api.get("crm_users", `&email=eq.${encodeURIComponent(email)}`).then(rows => {
@@ -242,19 +253,99 @@ function Login({ onLogin }) {
       if (u) onLogin(u); else { setErr(t("invalid_credentials")); setBusy(false); }
     }).catch(() => { setErr(t("connection_error")); setBusy(false); });
   };
+
+  const profile = ROLE_PROFILES.find(p => p.role === selectedProfile);
+
   return (
-    <div className="lw"><div className="lc fin">
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-        <button onClick={() => setLang(lang === "es" ? "en" : "es")} style={{ background: "var(--bg3)", border: "1px solid var(--bdr)", borderRadius: 6, padding: "2px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600, color: "var(--tx2)", fontFamily: "inherit" }}>{lang === "es" ? "EN" : "ES"}</button>
+    <div className="lw">
+      <div className="lc" style={{ maxWidth: step === 1 ? 520 : 360, transition: "max-width .3s" }}>
+
+        {/* Header */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <h1 style={{ fontSize:20, fontWeight:800, letterSpacing:.5 }}>PLATINUM<span style={{ color:"var(--ora)" }}>CRM</span></h1>
+          <button onClick={() => setLang(lang === "es" ? "en" : "es")} style={{ background:"var(--bg3)", border:"1px solid var(--bdr)", borderRadius:6, padding:"2px 8px", fontSize:10, cursor:"pointer", fontWeight:600, color:"var(--tx2)", fontFamily:"inherit" }}>{lang === "es" ? "EN" : "ES"}</button>
+        </div>
+
+        {step === 1 && (
+          <>
+            <div style={{ textAlign:"center", marginBottom:20 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:"var(--tx)", marginBottom:4 }}>¿Cómo vas a ingresar hoy?</div>
+              <div style={{ fontSize:11, color:"var(--tx3)" }}>Seleccioná tu perfil para continuar</div>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:8 }}>
+              {ROLE_PROFILES.map(p => (
+                <button
+                  key={p.role}
+                  onClick={() => { setSelectedProfile(p.role); setStep(2); setErr(""); }}
+                  style={{
+                    display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6,
+                    padding:"14px 16px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
+                    background: p.bg, border:`1.5px solid ${p.color}22`,
+                    transition:"all .15s", textAlign:"left"
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.border = `1.5px solid ${p.color}`; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseOut={e => { e.currentTarget.style.border = `1.5px solid ${p.color}22`; e.currentTarget.style.transform = "none"; }}
+                >
+                  <div style={{ fontSize:24 }}>{p.icon}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:p.color }}>{p.label}</div>
+                  <div style={{ fontSize:10, color:"var(--tx3)", lineHeight:1.4 }}>{p.desc}</div>
+                </button>
+              ))}
+            </div>
+            {/* 5to card centrado */}
+            <div style={{ display:"flex", justifyContent:"center" }}>
+              {(() => { const p = ROLE_PROFILES[4]; return (
+                <button
+                  key={p.role}
+                  onClick={() => { setSelectedProfile(p.role); setStep(2); setErr(""); }}
+                  style={{
+                    width:"calc(50% - 5px)", display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6,
+                    padding:"14px 16px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
+                    background: p.bg, border:`1.5px solid ${p.color}22`, transition:"all .15s", textAlign:"left"
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.border = `1.5px solid ${p.color}`; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseOut={e => { e.currentTarget.style.border = `1.5px solid ${p.color}22`; e.currentTarget.style.transform = "none"; }}
+                >
+                  <div style={{ fontSize:24 }}>{p.icon}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:p.color }}>{p.label}</div>
+                  <div style={{ fontSize:10, color:"var(--tx3)", lineHeight:1.4 }}>{p.desc}</div>
+                </button>
+              ); })()}
+            </div>
+          </>
+        )}
+
+        {step === 2 && profile && (
+          <>
+            {/* Badge de perfil seleccionado */}
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderRadius:10, background:profile.bg, border:`1.5px solid ${profile.color}33`, marginBottom:20 }}>
+              <span style={{ fontSize:22 }}>{profile.icon}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:profile.color }}>{profile.label}</div>
+                <div style={{ fontSize:10, color:"var(--tx3)" }}>{profile.desc}</div>
+              </div>
+              <button onClick={() => { setStep(1); setErr(""); setEmail(""); setPass(""); }} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--tx3)", fontFamily:"inherit", textDecoration:"underline" }}>Cambiar</button>
+            </div>
+
+            <div style={{ fontSize:13, fontWeight:700, marginBottom:16, color:"var(--tx)" }}>Ingresá tus credenciales</div>
+            {err && <div className="le" style={{ marginBottom:10 }}>{err}</div>}
+            <Fld label={t("email_label")} value={email} placeholder="usuario@empresa.com" onChange={v => { setEmail(v); setErr(""); }} />
+            <div style={{ height:8 }} />
+            <Fld label={t("password_label")} type="password" value={pass} placeholder="••••••" onChange={v => { setPass(v); setErr(""); }} onKeyDown={e => e.key === "Enter" && go()} />
+            <div style={{ height:16 }} />
+            <button
+              className="btn btn-p"
+              style={{ width:"100%", justifyContent:"center", padding:10, fontSize:12, background:profile.color, borderColor:profile.color }}
+              onClick={go}
+              disabled={busy}
+            >
+              {busy ? t("connecting") : `Ingresar como ${profile.label}`}
+            </button>
+          </>
+        )}
+
       </div>
-      <h1>PLATINUM<span>CRM</span></h1><p>Enterprise · {t("commercial_mgmt")}</p>
-      {err && <div className="le">{err}</div>}
-      <Fld label={t("email_label")} value={email} placeholder="usuario@platinumciber.com" onChange={v => { setEmail(v); setErr("") }} />
-      <div style={{ height: 6 }} />
-      <Fld label={t("password_label")} type="password" value={pass} placeholder="••••••" onChange={v => { setPass(v); setErr("") }} />
-      <div style={{ height: 12 }} />
-      <button className="btn btn-p" style={{ width: "100%", justifyContent: "center", padding: 10, fontSize: 12 }} onClick={go} disabled={busy}>{busy ? t("connecting") : t("login_btn")}</button>
-    </div></div>
+    </div>
   );
 }
 
