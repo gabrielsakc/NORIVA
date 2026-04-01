@@ -168,11 +168,52 @@ const css = `
   @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   .fin{animation:fadeIn .25s ease forwards}
   ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
-  .lw{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f9fc,#eef1f6)}
-  .lc{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:32px;width:92%;max-width:360px;box-shadow:0 16px 48px rgba(0,0,0,.06)}
-  .lc h1{font-size:20px;font-weight:700;text-align:center;margin-bottom:4px;letter-spacing:.5px}.lc h1 span{color:var(--ora)}
-  .lc p{text-align:center;font-size:11px;color:var(--tx3);margin-bottom:20px}
-  .le{background:rgba(220,38,38,.06);color:var(--red);padding:6px 10px;border-radius:8px;font-size:10px;text-align:center;margin-bottom:6px}
+  /* ── LOGIN SCREEN ── */
+  .lw{width:100vw;height:100vh;display:flex;overflow:hidden}
+  .l-left{flex:1;background:linear-gradient(145deg,#0f172a 0%,#1e1b4b 45%,#0f172a 100%);display:flex;flex-direction:column;justify-content:space-between;padding:48px;position:relative;overflow:hidden}
+  .l-left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 30% 40%,rgba(249,115,22,.15),transparent),radial-gradient(ellipse 60% 80% at 80% 80%,rgba(124,58,237,.12),transparent);pointer-events:none}
+  .l-logo{font-size:26px;font-weight:900;color:#fff;letter-spacing:1px;position:relative;z-index:1}.l-logo span{color:#f97316}
+  .l-tag{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:500;letter-spacing:.5px}
+  .l-hero{position:relative;z-index:1}
+  .l-hero h2{font-size:36px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:16px}
+  .l-hero h2 em{color:#f97316;font-style:normal}
+  .l-hero p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;max-width:320px}
+  .l-stats{display:flex;gap:16px;position:relative;z-index:1}
+  .l-stat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 18px;backdrop-filter:blur(10px)}
+  .l-stat-v{font-size:22px;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace}
+  .l-stat-l{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+  .l-orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none}
+  /* Right panel */
+  .l-right{width:480px;background:#fff;display:flex;flex-direction:column;justify-content:center;padding:48px 40px;overflow-y:auto;position:relative}
+  .l-right-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
+  .l-step{font-size:11px;color:var(--tx3);font-weight:600}
+  .l-step span{color:var(--ora)}
+  .l-title{font-size:22px;font-weight:800;color:var(--tx);margin-bottom:6px}
+  .l-sub{font-size:12px;color:var(--tx3);margin-bottom:24px;line-height:1.6}
+  /* Role cards grid */
+  .l-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .l-card{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:14px;cursor:pointer;border:1.5px solid;transition:all .18s;text-align:left;font-family:inherit;background:#fff}
+  .l-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+  .l-card-icon{font-size:26px;line-height:1}
+  .l-card-name{font-size:12px;font-weight:800}
+  .l-card-desc{font-size:10px;color:var(--tx3);line-height:1.4}
+  /* CEO card full width */
+  .l-card-ceo{grid-column:1/-1}
+  /* Profile badge in step 2 */
+  .l-badge{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;margin-bottom:24px;border:1.5px solid}
+  .l-badge-icon{font-size:28px}
+  .l-badge-name{font-size:13px;font-weight:800}
+  .l-badge-desc{font-size:10px;color:var(--tx3)}
+  .l-back{background:none;border:none;cursor:pointer;font-size:10px;color:var(--tx3);font-family:inherit;text-decoration:underline;padding:0}
+  /* Form */
+  .l-form-title{font-size:15px;font-weight:700;color:var(--tx);margin-bottom:16px}
+  .le{background:rgba(220,38,38,.06);color:var(--red);padding:8px 12px;border-radius:8px;font-size:10px;margin-bottom:12px;border:1px solid rgba(220,38,38,.1)}
+  /* Dots decoration */
+  .l-dots{position:absolute;bottom:40px;left:40px;display:flex;gap:6px}
+  .l-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2)}
+  .l-dot.on{background:#f97316;width:18px;border-radius:3px}
+  /* Responsive */
+  @media(max-width:760px){.l-left{display:none}.l-right{width:100vw;padding:32px 24px}}
   @media(max-width:900px){.sb{width:52px}.sb-hd span,.sb-it span,.sb-ft>div{display:none}.sb-it{justify-content:center;padding:8px}.grid4,.grid3{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
 `;
 
@@ -229,17 +270,18 @@ function Modal({ title, onClose, footer, children }) {
 
 // ═══ LOGIN ═══
 const ROLE_PROFILES = [
-  { role: "admin",     icon: "🛡️", label: "Administrador",    desc: "Acceso total al sistema",              color: "#dc2626", bg: "rgba(220,38,38,.06)"    },
-  { role: "manager",   icon: "📊", label: "Gerente Regional",  desc: "Gestión de equipo y región",           color: "#7c3aed", bg: "rgba(124,58,237,.06)"   },
-  { role: "sales_rep", icon: "🚀", label: "Vendedor",          desc: "Pipeline, leads y oportunidades",      color: "#059669", bg: "rgba(5,150,105,.06)"    },
-  { role: "support",   icon: "🎧", label: "Soporte",           desc: "Tickets, conversaciones y KB",         color: "#2563eb", bg: "rgba(37,99,235,.06)"    },
-  { role: "finance",   icon: "💰", label: "Finanzas",          desc: "Facturas, transacciones y reportes",   color: "#d97706", bg: "rgba(217,119,6,.06)"    },
+  { role: "ceo",       icon: "👑", label: "CEO",               desc: "Visión ejecutiva global",              color: "#0f172a", bg: "rgba(15,23,42,.04)",     border: "rgba(15,23,42,.12)"   },
+  { role: "admin",     icon: "🛡️", label: "Administrador",     desc: "Acceso total al sistema",              color: "#dc2626", bg: "rgba(220,38,38,.04)",    border: "rgba(220,38,38,.15)"  },
+  { role: "manager",   icon: "📊", label: "Gerente Regional",  desc: "Gestión de equipo y región",           color: "#7c3aed", bg: "rgba(124,58,237,.04)",   border: "rgba(124,58,237,.15)" },
+  { role: "sales_rep", icon: "🚀", label: "Vendedor",          desc: "Pipeline, leads y oportunidades",      color: "#059669", bg: "rgba(5,150,105,.04)",    border: "rgba(5,150,105,.15)"  },
+  { role: "support",   icon: "🎧", label: "Soporte",           desc: "Tickets, conversaciones y KB",         color: "#2563eb", bg: "rgba(37,99,235,.04)",    border: "rgba(37,99,235,.15)"  },
+  { role: "finance",   icon: "💰", label: "Finanzas",          desc: "Facturas, transacciones y reportes",   color: "#d97706", bg: "rgba(217,119,6,.04)",    border: "rgba(217,119,6,.15)"  },
 ];
 
 function Login({ onLogin }) {
   const t = useT();
   const { lang, setLang } = useLang();
-  const [step, setStep] = useState(1);           // 1 = elegir perfil, 2 = credenciales
+  const [step, setStep] = useState(1);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
@@ -258,92 +300,134 @@ function Login({ onLogin }) {
 
   return (
     <div className="lw">
-      <div className="lc" style={{ maxWidth: step === 1 ? 520 : 360, transition: "max-width .3s" }}>
 
-        {/* Header */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-          <h1 style={{ fontSize:20, fontWeight:800, letterSpacing:.5 }}>PLATINUM<span style={{ color:"var(--ora)" }}>CRM</span></h1>
-          <button onClick={() => setLang(lang === "es" ? "en" : "es")} style={{ background:"var(--bg3)", border:"1px solid var(--bdr)", borderRadius:6, padding:"2px 8px", fontSize:10, cursor:"pointer", fontWeight:600, color:"var(--tx2)", fontFamily:"inherit" }}>{lang === "es" ? "EN" : "ES"}</button>
+      {/* ── PANEL IZQUIERDO (marca) ── */}
+      <div className="l-left">
+        {/* Orbs decorativos */}
+        <div className="l-orb" style={{ width:400, height:400, background:"rgba(249,115,22,.12)", top:-80, right:-80 }} />
+        <div className="l-orb" style={{ width:300, height:300, background:"rgba(124,58,237,.1)", bottom:60, left:-60 }} />
+
+        {/* Logo */}
+        <div style={{ position:"relative", zIndex:1 }}>
+          <div className="l-logo">PLATINUM<span>CRM</span></div>
+          <div className="l-tag">Enterprise · Gestión Comercial 360°</div>
         </div>
 
+        {/* Hero copy */}
+        <div className="l-hero">
+          <h2>Tu operación comercial,<br/><em>bajo control total.</em></h2>
+          <p>Gestioná leads, oportunidades, clientes y equipos desde una sola plataforma inteligente.</p>
+        </div>
+
+        {/* Stats */}
+        <div>
+          <div className="l-stats">
+            <div className="l-stat"><div className="l-stat-v">25+</div><div className="l-stat-l">Módulos</div></div>
+            <div className="l-stat"><div className="l-stat-v">360°</div><div className="l-stat-l">Visibilidad</div></div>
+            <div className="l-stat"><div className="l-stat-v">IA</div><div className="l-stat-l">Integrada</div></div>
+          </div>
+          <div className="l-dots" style={{ position:"relative", bottom:"auto", left:"auto", marginTop:24 }}>
+            <div className={`l-dot${step === 1 ? " on" : ""}`} />
+            <div className={`l-dot${step === 2 ? " on" : ""}`} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── PANEL DERECHO (login) ── */}
+      <div className="l-right">
+
+        {/* Top bar */}
+        <div className="l-right-hd">
+          <div className="l-step">Paso <span>{step}</span> de 2</div>
+          <button onClick={() => setLang(lang === "es" ? "en" : "es")} style={{ background:"var(--bg3)", border:"1px solid var(--bdr)", borderRadius:6, padding:"3px 10px", fontSize:10, cursor:"pointer", fontWeight:700, color:"var(--tx2)", fontFamily:"inherit" }}>{lang === "es" ? "🇺🇸 EN" : "🇪🇸 ES"}</button>
+        </div>
+
+        {/* ── STEP 1: Selector de perfil ── */}
         {step === 1 && (
           <>
-            <div style={{ textAlign:"center", marginBottom:20 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--tx)", marginBottom:4 }}>¿Cómo vas a ingresar hoy?</div>
-              <div style={{ fontSize:11, color:"var(--tx3)" }}>Seleccioná tu perfil para continuar</div>
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:8 }}>
-              {ROLE_PROFILES.map(p => (
-                <button
-                  key={p.role}
+            <div className="l-title">¿Quién sos?</div>
+            <div className="l-sub">Elegí tu perfil para personalizar tu experiencia en el CRM.</div>
+
+            <div className="l-grid">
+              {/* CEO — ancho completo arriba */}
+              {ROLE_PROFILES.filter(p => p.role === "ceo").map(p => (
+                <button key={p.role} className="l-card l-card-ceo"
+                  style={{ borderColor: p.border, background: "linear-gradient(135deg,#0f172a,#1e1b4b)", color:"#fff" }}
                   onClick={() => { setSelectedProfile(p.role); setStep(2); setErr(""); }}
-                  style={{
-                    display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6,
-                    padding:"14px 16px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
-                    background: p.bg, border:`1.5px solid ${p.color}22`,
-                    transition:"all .15s", textAlign:"left"
-                  }}
-                  onMouseOver={e => { e.currentTarget.style.border = `1.5px solid ${p.color}`; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseOut={e => { e.currentTarget.style.border = `1.5px solid ${p.color}22`; e.currentTarget.style.transform = "none"; }}
+                  onMouseOver={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 12px 32px rgba(15,23,42,.3)"; }}
+                  onMouseOut={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; }}
                 >
-                  <div style={{ fontSize:24 }}>{p.icon}</div>
-                  <div style={{ fontSize:12, fontWeight:700, color:p.color }}>{p.label}</div>
-                  <div style={{ fontSize:10, color:"var(--tx3)", lineHeight:1.4 }}>{p.desc}</div>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                      <span className="l-card-icon">{p.icon}</span>
+                      <div>
+                        <div className="l-card-name" style={{ color:"#fff", fontSize:14 }}>{p.label}</div>
+                        <div className="l-card-desc" style={{ color:"rgba(255,255,255,.5)" }}>{p.desc}</div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize:18, opacity:.4 }}>→</span>
+                  </div>
+                </button>
+              ))}
+
+              {/* Resto de roles — 2 columnas */}
+              {ROLE_PROFILES.filter(p => p.role !== "ceo").map(p => (
+                <button key={p.role} className="l-card"
+                  style={{ borderColor: p.border, background: p.bg }}
+                  onClick={() => { setSelectedProfile(p.role); setStep(2); setErr(""); }}
+                  onMouseOver={e => { e.currentTarget.style.borderColor = p.color; e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow=`0 8px 24px ${p.color}22`; }}
+                  onMouseOut={e => { e.currentTarget.style.borderColor = p.border; e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; }}
+                >
+                  <span className="l-card-icon">{p.icon}</span>
+                  <div className="l-card-name" style={{ color: p.color }}>{p.label}</div>
+                  <div className="l-card-desc">{p.desc}</div>
                 </button>
               ))}
             </div>
-            {/* 5to card centrado */}
-            <div style={{ display:"flex", justifyContent:"center" }}>
-              {(() => { const p = ROLE_PROFILES[4]; return (
-                <button
-                  key={p.role}
-                  onClick={() => { setSelectedProfile(p.role); setStep(2); setErr(""); }}
-                  style={{
-                    width:"calc(50% - 5px)", display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6,
-                    padding:"14px 16px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
-                    background: p.bg, border:`1.5px solid ${p.color}22`, transition:"all .15s", textAlign:"left"
-                  }}
-                  onMouseOver={e => { e.currentTarget.style.border = `1.5px solid ${p.color}`; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseOut={e => { e.currentTarget.style.border = `1.5px solid ${p.color}22`; e.currentTarget.style.transform = "none"; }}
-                >
-                  <div style={{ fontSize:24 }}>{p.icon}</div>
-                  <div style={{ fontSize:12, fontWeight:700, color:p.color }}>{p.label}</div>
-                  <div style={{ fontSize:10, color:"var(--tx3)", lineHeight:1.4 }}>{p.desc}</div>
-                </button>
-              ); })()}
-            </div>
           </>
         )}
 
+        {/* ── STEP 2: Credenciales ── */}
         {step === 2 && profile && (
           <>
-            {/* Badge de perfil seleccionado */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderRadius:10, background:profile.bg, border:`1.5px solid ${profile.color}33`, marginBottom:20 }}>
-              <span style={{ fontSize:22 }}>{profile.icon}</span>
+            {/* Badge perfil */}
+            <div className="l-badge" style={{ background: profile.role === "ceo" ? "linear-gradient(135deg,#0f172a,#1e1b4b)" : profile.bg, borderColor: profile.border }}>
+              <span className="l-badge-icon">{profile.icon}</span>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:profile.color }}>{profile.label}</div>
-                <div style={{ fontSize:10, color:"var(--tx3)" }}>{profile.desc}</div>
+                <div className="l-badge-name" style={{ color: profile.role === "ceo" ? "#fff" : profile.color }}>{profile.label}</div>
+                <div className="l-badge-desc" style={{ color: profile.role === "ceo" ? "rgba(255,255,255,.5)" : undefined }}>{profile.desc}</div>
               </div>
-              <button onClick={() => { setStep(1); setErr(""); setEmail(""); setPass(""); }} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--tx3)", fontFamily:"inherit", textDecoration:"underline" }}>Cambiar</button>
+              <button className="l-back" style={{ color: profile.role === "ceo" ? "rgba(255,255,255,.5)" : undefined }} onClick={() => { setStep(1); setErr(""); setEmail(""); setPass(""); }}>← Cambiar</button>
             </div>
 
-            <div style={{ fontSize:13, fontWeight:700, marginBottom:16, color:"var(--tx)" }}>Ingresá tus credenciales</div>
-            {err && <div className="le" style={{ marginBottom:10 }}>{err}</div>}
-            <Fld label={t("email_label")} value={email} placeholder="usuario@empresa.com" onChange={v => { setEmail(v); setErr(""); }} />
-            <div style={{ height:8 }} />
-            <Fld label={t("password_label")} type="password" value={pass} placeholder="••••••" onChange={v => { setPass(v); setErr(""); }} onKeyDown={e => e.key === "Enter" && go()} />
-            <div style={{ height:16 }} />
+            <div className="l-form-title">Ingresá tus credenciales</div>
+            {err && <div className="le">{err}</div>}
+
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <Fld label={t("email_label")} value={email} placeholder="usuario@empresa.com" onChange={v => { setEmail(v); setErr(""); }} />
+              <Fld label={t("password_label")} type="password" value={pass} placeholder="••••••" onChange={v => { setPass(v); setErr(""); }} onKeyDown={e => e.key === "Enter" && !busy && go()} />
+            </div>
+
+            <div style={{ height:20 }} />
             <button
-              className="btn btn-p"
-              style={{ width:"100%", justifyContent:"center", padding:10, fontSize:12, background:profile.color, borderColor:profile.color }}
               onClick={go}
               disabled={busy}
+              style={{
+                width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                padding:"13px 20px", borderRadius:12, border:"none", cursor: busy ? "not-allowed" : "pointer",
+                background: profile.role === "ceo" ? "linear-gradient(135deg,#0f172a,#1e1b4b)" : profile.color,
+                color:"#fff", fontSize:13, fontWeight:700, fontFamily:"inherit",
+                opacity: busy ? .7 : 1, transition:"all .15s",
+                boxShadow: `0 4px 20px ${profile.color}44`
+              }}
+              onMouseOver={e => { if (!busy) e.currentTarget.style.transform="translateY(-1px)"; }}
+              onMouseOut={e => { e.currentTarget.style.transform="none"; }}
             >
-              {busy ? t("connecting") : `Ingresar como ${profile.label}`}
+              {busy ? "Conectando..." : `Ingresar como ${profile.label}`}
+              {!busy && <span style={{ fontSize:16 }}>→</span>}
             </button>
           </>
         )}
-
       </div>
     </div>
   );
@@ -735,6 +819,7 @@ function PipelineView({ data, reload }) {
 // El campo "region" viene de crm_users.region
 
 const ROLE_LABELS = {
+  ceo:       "CEO",
   admin:     "Administrador",
   manager:   "Gerente Regional",
   sales_rep: "Vendedor",
@@ -742,8 +827,9 @@ const ROLE_LABELS = {
   finance:   "Finanzas",
 };
 
-// null = acceso total (admin)
+// null = acceso total
 const ROLE_NAV = {
+  ceo:       null,
   admin:     null,
   manager:   ["dashboard","leads","accounts","contacts","opportunities","pipeline","tasks","calendar","activities","products","quotes","tickets","invoices","transactions","conversations","goals","forecasts","reports","orders","inbox","approvals","ai","surveys","knowledge","sla","automations","teams","territories"],
   sales_rep: ["dashboard","leads","accounts","contacts","opportunities","pipeline","tasks","calendar","activities","quotes","conversations","orders","inbox"],
